@@ -134,26 +134,26 @@ for (auto& forces_for_specific_task : forces_for_all_tasks)
 
 static void U_step(std:: vector <coordinate>& positions, std:: vector <coordinate>& velocities, const double stepsize, const double gamma){
 
-	static std:: normal_distribution<> normal{0,1};
+	std:: normal_distribution<> normal{0,1};
 
     // Prefactors used in the U step.
-    static const double pref_U1 {exp(-gamma*stepsize)};
-    static const double pref_U2 {(1-pref_U1)/gamma};
-    static const double pref_U3 {sqrt(2/gamma)};
-    static const double pref_U4 {sqrt(2*gamma)};
-    static const double pref_Z1 {sqrt(stepsize)};
-    static const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
-    static const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*stepsize*(1+pref_U1)) )};
-    static const double pref_Z4 {sqrt( 1-2*(1-pref_U1)/(gamma*stepsize*(1+pref_U1)) )};
+    const double pref_U1 {exp(-gamma*stepsize)};
+    const double pref_U2 {(1-pref_U1)/gamma};
+    const double pref_U3 {sqrt(2/gamma)};
+    const double pref_U4 {sqrt(2*gamma)};
+    const double pref_Z1 {sqrt(stepsize)};
+    const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
+    const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*stepsize*(1+pref_U1)) )};
+    const double pref_Z4 {sqrt( 1-2*(1-pref_U1)/(gamma*stepsize*(1+pref_U1)) )};
 
-    static const double pref_Z2_total1 {pref_Z2 * pref_Z3};
-    static const double pref_Z2_total2 {pref_Z2 * pref_Z4};
+    const double pref_Z2_total1 {pref_Z2 * pref_Z3};
+    const double pref_Z2_total2 {pref_Z2 * pref_Z4};
 
 
     // Compute new positions/velocities.
     coordinate Z1, Z2;
     coordinate xi1, xi2; 
-    static const size_t n_part {positions.size()};
+    const size_t n_part {positions.size()};
 
     for (int i=0; i<n_part; ++i){
 
@@ -335,20 +335,20 @@ int main(int argc, char* argv[]){
             ++k;
         }
 
-        // U_step(positions, velocities, h_half, gamma);
-        // apply_periodic_boundaries(positions);
-        // compute_force(forces, positions);
-        // B_step(positions, velocities, forces, h);
-        // U_step(positions, velocities, h_half, gamma);
-
-        B_step(positions, velocities, forces, h_half);
-        A_step(positions, velocities, h_half);
-        apply_periodic_boundaries(positions);
-        O_step(velocities, h, gamma);
-        A_step(positions, velocities, h_half);
+        U_step(positions, velocities, h_half, gamma);
         apply_periodic_boundaries(positions);
         compute_force_par(forces, positions);
-        B_step(positions, velocities, forces, h_half);
+        B_step(positions, velocities, forces, h);
+        U_step(positions, velocities, h_half, gamma);
+
+        // B_step(positions, velocities, forces, h_half);
+        // A_step(positions, velocities, h_half);
+        // apply_periodic_boundaries(positions);
+        // O_step(velocities, h, gamma);
+        // A_step(positions, velocities, h_half);
+        // apply_periodic_boundaries(positions);
+        // compute_force_par(forces, positions);
+        // B_step(positions, velocities, forces, h_half);
 
         if (i%1000==0) std::cout << "Iteration "<<i<< " done!\n";
 
