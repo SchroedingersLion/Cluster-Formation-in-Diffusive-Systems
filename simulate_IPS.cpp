@@ -8,7 +8,7 @@
 #include <numbers>
 
 
-constexpr double L {5};
+constexpr double L {5};           // box volume = [-L,L]^n
 constexpr int N_iter {100000};
 constexpr double h {0.1};
 constexpr int n_meas {10};
@@ -22,7 +22,7 @@ std:: string outputname {"output_test.csv"};
 
 constexpr double h_half = 0.5 * h;
 constexpr double T_Tcrit = (1/beta) / (2*std::numbers::pi * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
-
+constexpr double two_L {2*L};
 
 // Prepare RNG.
 std:: mt19937 twister;
@@ -38,10 +38,6 @@ struct coordinate{
 
 static double compute_sq_distances(const coordinate& pos1, const coordinate& pos2, 
                             double& dx, double& dy){
-
-    // box volume = [-L,L]^n
-
-    double two_L = 2*L;
     
     dx = pos1.x - pos2.x;
     if (dx > L)       dx -= two_L;
@@ -96,9 +92,8 @@ static std::vector<std::vector<coordinate>> forces_for_all_tasks( THREADS, std::
 static void compute_force_par(std::vector<coordinate>& forces, const std::vector<coordinate>& positions)
 {
 
-double two_L = 2*L;
+
 double pref {-kappa/(2*sigma_2)};
-  
 for (auto& forces_for_specific_task : forces_for_all_tasks)
     std::fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{ .x = 0.0, .y = 0.0 });
 
@@ -226,8 +221,7 @@ static void O_step(std:: vector <coordinate>& velocities, const double h, const 
 
 static void apply_periodic_boundaries(std:: vector <coordinate>& positions){
 
-    const double two_L = 2*L;
-     double x, y;
+    double x, y;
 
     for (int i=0; i<n_part; ++i){
         x = positions[i].x;
@@ -274,18 +268,13 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
 
     center_of_mass.x /= n_part;
     center_of_mass.y /= n_part;
-    double two_L = 2*L;
-    
-    dx = pos1.x - pos2.x;
-    if (dx > L)       dx -= two_L;
-    else if (dx < -L) dx += two_L;
 
     float dist {0}, dist_x {0}, dist_y{0};
     for (const auto pos : positions){
         dist_x = pos.x - center_of_mass.x;
         dist_y = pos.y - center_of_mass.y;
 
-        if (dist_x > L)       dist_x -= two_L;  // perdiodic boundaries
+        if (dist_x > L)       dist_x -= two_L;  // periodic boundaries
         else if (dist_x < -L) dist_x += two_L;
         if (dist_y > L)       dist_y -= two_L;
         else if (dist_y < -L) dist_y += two_L;
