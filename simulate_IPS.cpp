@@ -13,8 +13,8 @@ constexpr int N_iter {15000};
 constexpr double h {0.1};
 constexpr int n_meas {10};
 constexpr int n_part {1000};
-constexpr double beta {300};  // constexpr double gamma =0.05;  // leads to name conflict, use macro instead.
-#define gamma 0.05
+constexpr double beta {300};  
+
 constexpr double kappa {1./n_part};
 constexpr double sigma_2 {1};
 constexpr int randomseed {2};
@@ -136,7 +136,7 @@ for (auto& forces_for_specific_task : forces_for_all_tasks)
 }
 
 
-static void U_step(std:: vector <coordinate>& positions, std:: vector <coordinate>& velocities, const double stepsize){
+static void U_step(std:: vector <coordinate>& positions, std:: vector <coordinate>& velocities, const double stepsize, const double gamma){
 
 	static std:: normal_distribution<> normal{0,1};
 
@@ -208,7 +208,7 @@ static void A_step(std:: vector <coordinate>& positions, const std:: vector <coo
     return;
 }
 
-static void O_step(std:: vector <coordinate>& velocities, const double h){
+static void O_step(std:: vector <coordinate>& velocities, const double h, const double gamma){
 
     std:: normal_distribution<> normal{0,1};
     const double a = exp(-gamma*h);
@@ -290,8 +290,9 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
 
 int main(int argc, char* argv[]){
 
+    double gamma = atof(argv[1]);
 
-    std::cout<< "Simulation at T/Tcrit = "<<T_Tcrit<<std::endl;
+    std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
     seq.generate(seeds.begin(), seeds.end());
@@ -330,16 +331,16 @@ int main(int argc, char* argv[]){
             ++k;
         }
 
-        // U_step(positions, velocities, h_half);
+        // U_step(positions, velocities, h_half, gamma);
         // apply_periodic_boundaries(positions);
         // compute_force(forces, positions);
         // B_step(positions, velocities, forces, h);
-        // U_step(positions, velocities, h_half);
+        // U_step(positions, velocities, h_half, gamma);
 
         B_step(positions, velocities, forces, h_half);
         A_step(positions, velocities, h_half);
         apply_periodic_boundaries(positions);
-        O_step(velocities, h);
+        O_step(velocities, h, gamma);
         A_step(positions, velocities, h_half);
         apply_periodic_boundaries(positions);
         compute_force_par(forces, positions);
