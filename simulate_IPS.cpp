@@ -7,9 +7,11 @@
 #include <omp.h>
 #include <numbers>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 constexpr double L {5};           // box volume = [-L,L]^n
-constexpr int N_iter {100000};
+constexpr int N_iter {15000};
 constexpr double h {0.1};
 constexpr int n_meas {100};
 constexpr int n_part {1000};
@@ -290,7 +292,9 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
 int main(int argc, char* argv[]){
 
     double gamma = atof(argv[1]);
-    std:: string outputname {"trajectory_h" + std::to_string(h) + "_gam" + std::to_string(gamma) +".csv"};
+    std::ostringstream h_string;
+    h_string << std::fixed << std::setprecision(1) << h;
+    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +".csv"};
 
     std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
 
@@ -331,20 +335,20 @@ int main(int argc, char* argv[]){
             ++k;
         }
 
-        U_step(positions, velocities, h_half, gamma);
-        apply_periodic_boundaries(positions);
-        compute_force(forces, positions);
-        B_step(positions, velocities, forces, h);
-        U_step(positions, velocities, h_half, gamma);
+        // U_step(positions, velocities, h_half, gamma);
+        // apply_periodic_boundaries(positions);
+        // compute_force(forces, positions);
+        // B_step(positions, velocities, forces, h);
+        // U_step(positions, velocities, h_half, gamma);
 
-        // B_step(positions, velocities, forces, h_half);
-        // A_step(positions, velocities, h_half);
-        // apply_periodic_boundaries(positions);
-        // O_step(velocities, h, gamma);
-        // A_step(positions, velocities, h_half);
-        // apply_periodic_boundaries(positions);
-        // compute_force_par(forces, positions);
-        // B_step(positions, velocities, forces, h_half);
+        B_step(positions, velocities, forces, h_half);
+        A_step(positions, velocities, h_half);
+        apply_periodic_boundaries(positions);
+        O_step(velocities, h, gamma);
+        A_step(positions, velocities, h_half);
+        apply_periodic_boundaries(positions);
+        compute_force_par(forces, positions);
+        B_step(positions, velocities, forces, h_half);
 
         if (i%1000==0) std::cout << "Iteration "<<i<< " done!\n";
 
