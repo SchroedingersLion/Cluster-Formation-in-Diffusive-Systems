@@ -9,7 +9,7 @@
 
 
 constexpr double L {5};
-constexpr int N_iter {15000};
+constexpr int N_iter {100000};
 constexpr double h {0.1};
 constexpr int n_meas {10};
 constexpr int n_part {1000};
@@ -274,11 +274,22 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
 
     center_of_mass.x /= n_part;
     center_of_mass.y /= n_part;
+    double two_L = 2*L;
+    
+    dx = pos1.x - pos2.x;
+    if (dx > L)       dx -= two_L;
+    else if (dx < -L) dx += two_L;
 
     float dist {0}, dist_x {0}, dist_y{0};
     for (const auto pos : positions){
         dist_x = pos.x - center_of_mass.x;
         dist_y = pos.y - center_of_mass.y;
+
+        if (dist_x > L)       dist_x -= two_L;  // perdiodic boundaries
+        else if (dist_x < -L) dist_x += two_L;
+        if (dist_y > L)       dist_y -= two_L;
+        else if (dist_y < -L) dist_y += two_L;
+
         dist += sqrt(dist_x*dist_x + dist_y*dist_y);
     }
 
