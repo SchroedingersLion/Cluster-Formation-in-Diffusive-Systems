@@ -139,7 +139,7 @@ static void U_step(std:: vector <coordinate>& positions, std:: vector <coordinat
     // Prefactors used in the U step.
     const double pref_U1 {exp(-gamma*stepsize)};
     const double pref_U2 {(1-pref_U1)/gamma};
-    const double pref_U3 {sqrt(2/beta*gamma)};
+    const double pref_U3 {sqrt(2/(beta*gamma))};
     const double pref_U4 {sqrt(2*gamma/beta)};
     const double pref_Z1 {sqrt(stepsize)};
     const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
