@@ -139,8 +139,8 @@ static void U_step(std:: vector <coordinate>& positions, std:: vector <coordinat
     // Prefactors used in the U step.
     const double pref_U1 {exp(-gamma*stepsize)};
     const double pref_U2 {(1-pref_U1)/gamma};
-    const double pref_U3 {sqrt(2/gamma)};
-    const double pref_U4 {sqrt(2*gamma)};
+    const double pref_U3 {sqrt(2/beta*gamma)};
+    const double pref_U4 {sqrt(2*gamma/beta)};
     const double pref_Z1 {sqrt(stepsize)};
     const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
     const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*stepsize*(1+pref_U1)) )};
@@ -180,9 +180,7 @@ static void U_step(std:: vector <coordinate>& positions, std:: vector <coordinat
 
 }
 
-static void B_step(const std:: vector <coordinate>& positions, 
-std:: vector <coordinate>& velocities, std:: vector <coordinate>& forces, const double h){
-
+static void B_step(std:: vector <coordinate>& velocities, std:: vector <coordinate>& forces, const double h){
 
     // Update velocities.
     for (int i=0; i<n_part; ++i){
@@ -217,7 +215,7 @@ static void O_step(std:: vector <coordinate>& velocities, const double h, const 
 
     return;
     
-    }
+}
 
 
 static void apply_periodic_boundaries(std:: vector <coordinate>& positions){
@@ -338,17 +336,17 @@ int main(int argc, char* argv[]){
         U_step(positions, velocities, h_half, gamma);
         apply_periodic_boundaries(positions);
         compute_force_par(forces, positions);
-        B_step(positions, velocities, forces, h);
+        B_step(velocities, forces, h);
         U_step(positions, velocities, h_half, gamma);
 
-        // B_step(positions, velocities, forces, h_half);
+        // B_step(velocities, forces, h_half);
         // A_step(positions, velocities, h_half);
         // apply_periodic_boundaries(positions);
         // O_step(velocities, h, gamma);
         // A_step(positions, velocities, h_half);
         // apply_periodic_boundaries(positions);
         // compute_force_par(forces, positions);
-        // B_step(positions, velocities, forces, h_half);
+        // B_step(velocities, forces, h_half);
 
         if (i%1000==0) std::cout << "Iteration "<<i<< " done!\n";
 
