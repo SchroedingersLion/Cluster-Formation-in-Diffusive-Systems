@@ -236,19 +236,20 @@ static void apply_periodic_boundaries(std:: vector <coordinate>& positions){
 
 static void print_to_csv(const std:: string& outputname, 
                   const std:: vector <std:: vector <coordinate>> positions,
-                  const std:: vector <float> center_of_mass_distance,  
+                  const std:: vector <float> center_of_mass_distance,
+                  const std:: vector <float> msds,
                   const double stepsize, const double n_meas){    
 
     std:: ofstream file{outputname};
     double time;
     std:: cout << "Writing to file...\n";
-    file << "Time  " << "x  " << "y  " << "com_distance\n";
+    file << "Time  " << "x  " << "y  " << "com_distance " << "MSD\n";
     for ( size_t i = 0; i<positions.size(); ++i )
     {
         time =  i*n_meas*stepsize;
         for ( size_t j = 0; j<positions[0].size(); ++j )
         {
-            file << time << " " << positions[i][j].x << " " << positions[i][j].y << " " << center_of_mass_distance[i] << "\n";  
+            file << time << " " << positions[i][j].x << " " << positions[i][j].y << " " << center_of_mass_distance[i] << " " << msds[i] << "\n";  
         }
     }
 
@@ -287,6 +288,28 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
 
 
 
+static double get_msd(const std:: vector <coordinate>& positions, const std:: vector <coordinate>& init_positions){
+
+    coordinate diff;
+    double msd {0};
+
+    for(int i=0; i<positions.size(); ++i){
+        
+        diff.x = positions[i].x - init_positions[i].x;
+        diff.y = positions[i].y - init_positions[i].y;
+
+        if (diff.x > L)         diff.x -= two_L;
+        else if (diff.x < -L)   diff.x += two_L;
+        if (diff.y > L)         diff.y -= two_L;
+        else if (diff.y < -L)   diff.y += two_L;
+
+        msd += diff.x*diff.x + diff.y*diff.y;
+
+    }
+
+    return 1./positions.size() * msd;
+
+}
 
 
 int main(int argc, char* argv[]){
@@ -294,8 +317,8 @@ int main(int argc, char* argv[]){
     double gamma = atof(argv[1]);
     std::ostringstream h_string;
     h_string << std::fixed << std::setprecision(1) << h;
-    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(randomseed) +".csv"};
-
+    // std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(randomseed) +".csv"};
+    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] + ".csv"};
     std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
@@ -311,6 +334,7 @@ int main(int argc, char* argv[]){
         positions[i].x = box_uniform(twister);
         positions[i].y = box_uniform(twister);
     }
+    const std:: vector <coordinate> init_positions {positions};
 
     // Set forces.
     std:: vector <coordinate> forces(n_part);
@@ -320,8 +344,10 @@ int main(int argc, char* argv[]){
     std:: vector <coordinate> velocities(n_part);
     
     // Results vector.
-    std:: vector < std:: vector <coordinate>> position_samples(N_iter / n_meas + 1);
-    std:: vector <float> center_of_mass_distances(N_iter / n_meas + 1);
+    const size_t size_results_vector = N_iter / n_meas + 1;
+    std:: vector <std:: vector <coordinate>> position_samples(size_results_vector);
+    std:: vector <float>                     center_of_mass_distances(size_results_vector);
+    std:: vector <float>                     msds(size_results_vector);
     int k {0};
 
     // Main loop.
@@ -334,6 +360,7 @@ int main(int argc, char* argv[]){
         
             position_samples[k] = positions;
             center_of_mass_distances[k] = get_center_of_mass_distance(positions);
+            msds[k] = get_msd(positions, init_positions);
             ++k;
         }
 
@@ -360,7 +387,7 @@ int main(int argc, char* argv[]){
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
     
-    print_to_csv(outputname, position_samples, center_of_mass_distances, h, n_meas);
+    print_to_csv(outputname, position_samples, center_of_mass_distances, msds, h, n_meas);
 
     return 0;
 
