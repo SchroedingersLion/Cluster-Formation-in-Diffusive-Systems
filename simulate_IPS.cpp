@@ -1,17 +1,17 @@
 #include <iostream>
 #include <vector>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <random>
 #include <fstream>
 #include <chrono>
 #include <omp.h>
-#include <numbers>
 #include <string>
 #include <sstream>
 #include <iomanip>
 
 constexpr double L {5};           // box volume = [-L,L]^n
-constexpr int N_iter {15000};
+constexpr int N_iter {50000};
 constexpr double h {0.1};
 constexpr int n_meas {100};
 constexpr int n_part {1000};
@@ -19,10 +19,10 @@ constexpr double beta {300};
 
 constexpr double kappa {1./n_part};
 constexpr double sigma_2 {1};
-constexpr int randomseed {2};
+constexpr int randomseed {1};
 
 constexpr double h_half = 0.5 * h;
-constexpr double T_Tcrit = (1/beta) / (2*std::numbers::pi * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
+constexpr double T_Tcrit = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
 constexpr double two_L {2*L};
 
 // Prepare RNG.
@@ -287,18 +287,22 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
 
 
 
+
+
 int main(int argc, char* argv[]){
 
     double gamma = atof(argv[1]);
     std::ostringstream h_string;
     h_string << std::fixed << std::setprecision(1) << h;
-    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +".csv"};
+    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(randomseed) +".csv"};
 
     std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
-    seq.generate(seeds.begin(), seeds.end());
-    twister.seed(seeds.at(0)); 
+    // seq.generate(seeds.begin(), seeds.end());
+    // twister.seed(seeds.at(0)); 
+    auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    twister.seed(seed);
 
     // Set positions.
     std:: uniform_real_distribution<double> box_uniform(-L, L);
