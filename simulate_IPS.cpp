@@ -25,16 +25,14 @@ constexpr double h_half = 0.5 * h;
 constexpr double T_Tcrit = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
 constexpr double two_L {2*L};
 
-// Prepare RNG.
+// RNG.
 std:: mt19937 twister;
-std:: seed_seq seq{1,20,3200,403,5*randomseed+1,12000,73667,9474+randomseed,19151-randomseed};
-std:: vector < std::uint32_t > seeds(1);
-
 
 struct coordinate{
     double x{0};
     double y{0};
 };
+
 
 
 static double compute_sq_distances(const coordinate& pos1, const coordinate& pos2, 
@@ -258,34 +256,56 @@ static void print_to_csv(const std:: string& outputname,
 }
 
 
+
 static double get_center_of_mass_distance(const std:: vector <coordinate>& positions){
+// We use the method of  
+// L. Bai and D. Breen, ``Calculating Center of Mass in an Unbounded 2D Environment,'' 
+// Journal of Graphics Tools, Vol. 13, No. 4, December 2008, pp. 53-60. 
 
+    // Compute center of mass.
     coordinate center_of_mass;
+    const double pref = 2*M_PI/two_L;
+    const double pref2 = 1/pref;
+    coordinate xi, zeta, theta;
+
     for (const auto pos : positions){
-        center_of_mass.x += pos.x;
-        center_of_mass.y += pos.y;
+        
+        theta.x = pref*pos.x;
+        xi.x += cos(theta.x);
+        zeta.x += sin(theta.x);
+
+        theta.y = pref*pos.y;
+        xi.y += cos(theta.y);
+        zeta.y += sin(theta.y);
+
     }
+    xi.x *= pref2/n_part;
+    xi.y *= pref2/n_part;
+    zeta.x *= pref2/n_part;
+    zeta.y *= pref2/n_part;
 
-    center_of_mass.x /= n_part;
-    center_of_mass.y /= n_part;
+    center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
+    center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
 
+
+    // Compute distaance to COM.
     float dist {0}, dist_x {0}, dist_y{0};
     for (const auto pos : positions){
         dist_x = pos.x - center_of_mass.x;
         dist_y = pos.y - center_of_mass.y;
 
-        if (dist_x > L)       dist_x -= two_L;  // periodic boundaries
+        if (dist_x > L)       dist_x -= two_L;  // periodic boundaries.
         else if (dist_x < -L) dist_x += two_L;
         if (dist_y > L)       dist_y -= two_L;
         else if (dist_y < -L) dist_y += two_L;
-
+        
         dist += sqrt(dist_x*dist_x + dist_y*dist_y);
+
     }
 
     return dist/n_part;
 
 }
-
 
 
 static double get_msd(const std:: vector <coordinate>& positions, const std:: vector <coordinate>& init_positions){
@@ -312,29 +332,73 @@ static double get_msd(const std:: vector <coordinate>& positions, const std:: ve
 }
 
 
-int main(int argc, char* argv[]){
+static std:: vector <coordinate> set_initial_positions(int seed){
+    // uniform initialization.
 
-    double gamma = atof(argv[1]);
-    std::ostringstream h_string;
-    h_string << std::fixed << std::setprecision(1) << h;
-    // std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(randomseed) +".csv"};
-    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] + ".csv"};
-    std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
-
-    // Prepare simulation.
-    // seq.generate(seeds.begin(), seeds.end());
-    // twister.seed(seeds.at(0)); 
-    auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     twister.seed(seed);
-
-    // Set positions.
     std:: uniform_real_distribution<double> box_uniform(-L, L);
     std:: vector <coordinate> positions(n_part);
     for (int i=0; i<n_part; ++i){
         positions[i].x = box_uniform(twister);
         positions[i].y = box_uniform(twister);
     }
-    const std:: vector <coordinate> init_positions {positions};
+    
+    return positions;
+
+} 
+
+static std:: vector <coordinate> set_initial_positions(){
+    // square lattice initialization.
+
+    std:: vector <coordinate> positions(n_part);
+    
+    // obtain number of particles per box dimension (for even spacing).
+    int Nx = static_cast<int>(floor(sqrt(n_part)));
+    while (n_part%Nx != 0) Nx += 1;
+    int Ny = n_part/Nx;
+    
+    const double L_mod = L-0.00001; // to ensure no particle is placed on the edge.
+
+    const double dx = 2*L_mod/Nx; // spacing between particles.
+    const double dy = 2*L_mod/Ny;
+
+    // place particles.
+    for (int iy=0; iy<Ny; ++iy){
+        for(int ix=0; ix<Nx; ++ix){
+
+            positions[iy*Nx + ix].x = -L_mod + ix*dx;
+            positions[iy*Nx + ix].y = -L_mod + iy*dy;
+
+        }
+    }
+
+    return positions;
+
+}
+
+
+int main(int argc, char* argv[]){
+
+    double gamma = atof(argv[1]);
+    int seed = atoi(argv[2]);
+
+    // Output file name.
+    std::ostringstream h_string;
+    h_string << std::fixed << std::setprecision(1) << h;
+    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(seed) +".csv"};
+    
+    std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
+
+    // Prepare simulation.
+
+    // Set positions.
+    // auto init_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    // const std:: vector <coordinate> init_positions = set_initial_positions(seed);
+    const std:: vector <coordinate> init_positions = set_initial_positions();
+    std:: vector <coordinate> positions = init_positions;
+
+    // Seed RNG for simulation.
+    twister.seed(seed);
 
     // Set forces.
     std:: vector <coordinate> forces(n_part);
