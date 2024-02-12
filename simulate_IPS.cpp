@@ -11,7 +11,7 @@
 #include <iomanip>
 
 constexpr double L {5};           // box volume = [-L,L]^n
-constexpr int N_iter {50000};
+constexpr int N_iter {150000};
 constexpr double h {0.1};
 constexpr int n_meas {100};
 constexpr int n_part {1000};
@@ -20,6 +20,7 @@ constexpr double beta {300};
 constexpr double kappa {1./n_part};
 constexpr double sigma_2 {1};
 constexpr int randomseed {1};
+constexpr int THREADS = 10;
 
 constexpr double h_half = 0.5 * h;
 constexpr double T_Tcrit = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
@@ -86,47 +87,45 @@ static void compute_force(std:: vector<coordinate>& forces, const std:: vector<c
 
 }
 
-constexpr int THREADS = 10;
 static std::vector<std::vector<coordinate>> forces_for_all_tasks( THREADS, std::vector<coordinate>(n_part, coordinate{ .x = 0.0, .y = 0.0 }));
 static void compute_force_par(std::vector<coordinate>& forces, const std::vector<coordinate>& positions)
 {
 
+    double pref {-kappa/(2*sigma_2)};
+    for (auto& forces_for_specific_task : forces_for_all_tasks)
+        std::fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{ .x = 0.0, .y = 0.0 });
 
-double pref {-kappa/(2*sigma_2)};
-for (auto& forces_for_specific_task : forces_for_all_tasks)
-    std::fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{ .x = 0.0, .y = 0.0 });
+    #pragma omp parallel for schedule(dynamic) num_threads(THREADS)
+    for (int i = 0; i < n_part; ++i) {
+        for (int j = i + 1; j < n_part; ++j) {
 
-#pragma omp parallel for schedule(dynamic) num_threads(THREADS)
-  for (int i = 0; i < n_part; ++i) {
-    for (int j = i + 1; j < n_part; ++j) {
+        double dx = positions[i].x - positions[j].x;
+        dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
 
-      double dx = positions[i].x - positions[j].x;
-      dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
+        double dy = positions[i].y - positions[j].y;
+        dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
 
-      double dy = positions[i].y - positions[j].y;
-      dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
+        double dist2 = dx * dx + dy * dy;
 
-      double dist2 = dx * dx + dy * dy;
+        double expo = exp(-dist2 / (2 * sigma_2));
 
-      double expo = exp(-dist2 / (2 * sigma_2));
+        double force = pref * expo;
 
-      double force = pref * expo;
-
-      std::vector<coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
-      forces_for_this_task[i].x += force * dx;
-      forces_for_this_task[i].y += force * dy;
-      forces_for_this_task[j].x += -force * dx;
-      forces_for_this_task[j].y += -force * dy;
+        std::vector<coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+        forces_for_this_task[i].x += force * dx;
+        forces_for_this_task[i].y += force * dy;
+        forces_for_this_task[j].x += -force * dx;
+        forces_for_this_task[j].y += -force * dy;
+        }
     }
-  }
-  // Sum all of the task-specific forces into the output parameter.
-  std::fill(forces.begin(), forces.end(), coordinate{ .x = 0.0, .y = 0.0 });
-  for (auto const& forces_for_specific_task : forces_for_all_tasks)
-    for (int i = 0; i < n_part; ++i)
-    {
-      forces[i].x += forces_for_specific_task[i].x;
-      forces[i].y += forces_for_specific_task[i].y;
-    }
+    // Sum all of the task-specific forces into the output parameter.
+    std::fill(forces.begin(), forces.end(), coordinate{ .x = 0.0, .y = 0.0 });
+    for (auto const& forces_for_specific_task : forces_for_all_tasks)
+        for (int i = 0; i < n_part; ++i)
+        {
+        forces[i].x += forces_for_specific_task[i].x;
+        forces[i].y += forces_for_specific_task[i].y;
+        }
 }
 
 
@@ -233,10 +232,10 @@ static void apply_periodic_boundaries(std:: vector <coordinate>& positions){
 
 
 static void print_to_csv(const std:: string& outputname, 
-                  const std:: vector <std:: vector <coordinate>> positions,
-                  const std:: vector <float> center_of_mass_distance,
-                  const std:: vector <float> msds,
-                  const double stepsize, const double n_meas){    
+                        const std:: vector <std:: vector <coordinate>> positions,
+                        const std:: vector <float> center_of_mass_distance,
+                        const std:: vector <float> msds,
+                        const double stepsize, const double n_meas){    
 
     std:: ofstream file{outputname};
     double time;
@@ -245,10 +244,32 @@ static void print_to_csv(const std:: string& outputname,
     for ( size_t i = 0; i<positions.size(); ++i )
     {
         time =  i*n_meas*stepsize;
-        for ( size_t j = 0; j<positions[0].size(); ++j )
+        for ( size_t j = 0; j<n_part; ++j )
         {
             file << time << " " << positions[i][j].x << " " << positions[i][j].y << " " << center_of_mass_distance[i] << " " << msds[i] << "\n";  
         }
+    }
+
+    file.close();
+
+}
+
+
+static void print_to_csv(const std:: string& outputname, 
+                        const std:: vector <float> center_of_mass_distance,
+                        const std:: vector <float> msds,
+                        const double stepsize, const double n_meas){    
+// Overloaded version without printing positions.
+
+    std:: ofstream file{outputname};
+    double time;
+    std:: cout << "Writing to file...\n";
+    file << "Time " << "com_distance " << "MSD\n";
+    for ( size_t i = 0; i<center_of_mass_distance.size(); ++i )
+    {
+        time =  i*n_meas*stepsize;
+        file << time << " " << center_of_mass_distance[i] << " " << msds[i] << "\n";  
+        
     }
 
     file.close();
@@ -385,7 +406,7 @@ int main(int argc, char* argv[]){
     // Output file name.
     std::ostringstream h_string;
     h_string << std::fixed << std::setprecision(1) << h;
-    std:: string outputname {"trajectory_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(seed) +".csv"};
+    std:: string outputname {"results_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(seed) +".csv"};
     
     std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
 
@@ -451,7 +472,8 @@ int main(int argc, char* argv[]){
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
     
-    print_to_csv(outputname, position_samples, center_of_mass_distances, msds, h, n_meas);
+    // print_to_csv(outputname, position_samples, center_of_mass_distances, msds, h, n_meas);
+    print_to_csv(outputname, center_of_mass_distances, msds, h, n_meas);
 
     return 0;
 
