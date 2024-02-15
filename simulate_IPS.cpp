@@ -11,7 +11,7 @@
 #include <iomanip>
 
 constexpr double L {5};           // box volume = [-L,L]^n
-constexpr int N_iter {150000};
+constexpr int N_iter {10000};
 constexpr double h {0.1};
 constexpr int n_meas {100};
 constexpr int n_part {1000};
@@ -449,25 +449,25 @@ int main(int argc, char* argv[]){
             ++k;
         }
 
-        U_step(positions, velocities, h_half, gamma);
-        apply_periodic_boundaries(positions);
-        compute_force_par(forces, positions);
-        B_step(velocities, forces, h);
-        U_step(positions, velocities, h_half, gamma);
-
-        // B_step(velocities, forces, h_half);
-        // A_step(positions, velocities, h_half);
-        // apply_periodic_boundaries(positions);
-        // O_step(velocities, h, gamma);
-        // A_step(positions, velocities, h_half);
+        // U_step(positions, velocities, h_half, gamma);
         // apply_periodic_boundaries(positions);
         // compute_force_par(forces, positions);
-        // B_step(velocities, forces, h_half);
+        // B_step(velocities, forces, h);
+        // U_step(positions, velocities, h_half, gamma);
+
+        B_step(velocities, forces, h_half);
+        A_step(positions, velocities, h_half);
+        apply_periodic_boundaries(positions);
+        O_step(velocities, h, gamma);
+        A_step(positions, velocities, h_half);
+        apply_periodic_boundaries(positions);
+        compute_force_par(forces, positions);
+        B_step(velocities, forces, h_half);
 
         if (i%1000==0) std::cout << "Iteration "<<i<< " done!\n";
 
     }
-    
+
     auto t2 = std:: chrono:: high_resolution_clock:: now();
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
