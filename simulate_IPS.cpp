@@ -11,8 +11,7 @@
 #include <iomanip>
 
 constexpr double L {5};           // box volume = [-L,L]^n
-constexpr int N_iter {10000};
-constexpr double h {0.1};
+int N_iter {12000};
 constexpr int n_meas {100};
 constexpr int n_part {1000};
 constexpr double beta {300};  
@@ -22,7 +21,6 @@ constexpr double sigma_2 {1};
 constexpr int randomseed {1};
 constexpr int THREADS = 10;
 
-constexpr double h_half = 0.5 * h;
 constexpr double T_Tcrit = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
 constexpr double two_L {2*L};
 
@@ -235,18 +233,19 @@ static void print_to_csv(const std:: string& outputname,
                         const std:: vector <std:: vector <coordinate>> positions,
                         const std:: vector <float> center_of_mass_distance,
                         const std:: vector <float> msds,
+                        const std:: vector <float> Tkin,
                         const double stepsize, const double n_meas){    
 
     std:: ofstream file{outputname};
     double time;
     std:: cout << "Writing to file...\n";
-    file << "Time  " << "x  " << "y  " << "com_distance " << "MSD\n";
+    file << "Time  " << "x  " << "y  " << "com_distance " << "MSD " << "Tkin\n";
     for ( size_t i = 0; i<positions.size(); ++i )
     {
         time =  i*n_meas*stepsize;
         for ( size_t j = 0; j<n_part; ++j )
         {
-            file << time << " " << positions[i][j].x << " " << positions[i][j].y << " " << center_of_mass_distance[i] << " " << msds[i] << "\n";  
+            file << time << " " << positions[i][j].x << " " << positions[i][j].y << " " << center_of_mass_distance[i] << " " << msds[i] << " " << Tkin[i] << "\n";  
         }
     }
 
@@ -258,17 +257,18 @@ static void print_to_csv(const std:: string& outputname,
 static void print_to_csv(const std:: string& outputname, 
                         const std:: vector <float> center_of_mass_distance,
                         const std:: vector <float> msds,
+                        const std:: vector <float> Tkin,
                         const double stepsize, const double n_meas){    
 // Overloaded version without printing positions.
 
     std:: ofstream file{outputname};
     double time;
     std:: cout << "Writing to file...\n";
-    file << "Time " << "com_distance " << "MSD\n";
+    file << "Time " << "com_distance " << "MSD " << "Tkin\n";
     for ( size_t i = 0; i<center_of_mass_distance.size(); ++i )
     {
         time =  i*n_meas*stepsize;
-        file << time << " " << center_of_mass_distance[i] << " " << msds[i] << "\n";  
+        file << time << " " << center_of_mass_distance[i] << " " << msds[i] << " " << Tkin[i] << "\n";    
         
     }
 
@@ -309,7 +309,7 @@ static double get_center_of_mass_distance(const std:: vector <coordinate>& posit
     center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
 
 
-    // Compute distaance to COM.
+    // Compute distance to COM.
     float dist {0}, dist_x {0}, dist_y{0};
     for (const auto pos : positions){
         dist_x = pos.x - center_of_mass.x;
@@ -349,6 +349,19 @@ static double get_msd(const std:: vector <coordinate>& positions, const std:: ve
     }
 
     return 1./positions.size() * msd;
+
+}
+
+
+static double get_Tkin(const std:: vector <coordinate>& velocities){
+
+    double Tkin {0};
+
+    for(auto vel : velocities){
+        Tkin += vel.x*vel.x + vel.y*vel.y;
+    }
+
+    return Tkin/(2*velocities.size());
 
 }
 
@@ -400,12 +413,14 @@ static std:: vector <coordinate> set_initial_positions(){
 
 int main(int argc, char* argv[]){
 
-    double gamma = atof(argv[1]);
-    int seed = atoi(argv[2]);
+    const double gamma = atof(argv[1]);
+    const double h = atof(argv[2]);
+    N_iter = atoi(argv[3]);
+    int seed = atoi(argv[4]);
 
     // Output file name.
     std::ostringstream h_string;
-    h_string << std::fixed << std::setprecision(1) << h;
+    h_string << std::fixed << std::setprecision(2) << h;
     std:: string outputname {"results_h" + h_string.str() + "_gam" + argv[1] +"_seed" + std::to_string(seed) +".csv"};
     
     std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
@@ -414,8 +429,8 @@ int main(int argc, char* argv[]){
 
     // Set positions.
     // auto init_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    // const std:: vector <coordinate> init_positions = set_initial_positions(seed);
-    const std:: vector <coordinate> init_positions = set_initial_positions();
+    const std:: vector <coordinate> init_positions = set_initial_positions(seed);
+    // const std:: vector <coordinate> init_positions = set_initial_positions();
     std:: vector <coordinate> positions = init_positions;
 
     // Seed RNG for simulation.
@@ -433,10 +448,13 @@ int main(int argc, char* argv[]){
     std:: vector <std:: vector <coordinate>> position_samples(size_results_vector);
     std:: vector <float>                     center_of_mass_distances(size_results_vector);
     std:: vector <float>                     msds(size_results_vector);
+    std:: vector <float>                     Tkin(size_results_vector);
     int k {0};
 
     // Main loop.
     std:: normal_distribution<> normal{0,1};
+    const double h_half = 0.5 * h;
+
     
     auto t1 = std:: chrono::high_resolution_clock::now();
     for (int i=0; i<=N_iter; ++i){
@@ -446,6 +464,7 @@ int main(int argc, char* argv[]){
             position_samples[k] = positions;
             center_of_mass_distances[k] = get_center_of_mass_distance(positions);
             msds[k] = get_msd(positions, init_positions);
+            Tkin[k] = get_Tkin(velocities);
             ++k;
         }
 
@@ -472,8 +491,8 @@ int main(int argc, char* argv[]){
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
     
-    // print_to_csv(outputname, position_samples, center_of_mass_distances, msds, h, n_meas);
-    print_to_csv(outputname, center_of_mass_distances, msds, h, n_meas);
+    print_to_csv(outputname, position_samples, center_of_mass_distances, msds, Tkin, h, n_meas);
+    // print_to_csv(outputname, center_of_mass_distances, msds, Tkin, h, n_meas);
 
     return 0;
 
