@@ -34,62 +34,78 @@ struct coordinate{
 
 
 
-static double compute_sq_distances(const coordinate& pos1, const coordinate& pos2, 
-                            double& dx, double& dy){
+// static double compute_sq_distances(const coordinate& pos1, const coordinate& pos2, 
+//                             double& dx, double& dy){
     
-    dx = pos1.x - pos2.x;
-    if (dx > L)       dx -= two_L;
-    else if (dx < -L) dx += two_L;
+//     dx = pos1.x - pos2.x;
+//     if (dx > L)       dx -= two_L;
+//     else if (dx < -L) dx += two_L;
 
 
-    dy = pos1.y - pos2.y;
-    if (dy > L)       dy -= two_L;
-    else if (dy < -L) dy += two_L;
+//     dy = pos1.y - pos2.y;
+//     if (dy > L)       dy -= two_L;
+//     else if (dy < -L) dy += two_L;
     
-    return dx*dx + dy*dy;
+//     return dx*dx + dy*dy;
 
-}
+// }
 
-static double force_term(double& dist2){
+// static double force_term(double& dist2){
 
-     double pref {-kappa/(2*sigma_2)};
-     double expo;
-     expo = exp(-dist2/(2*sigma_2));
+//      double pref {-kappa/(2*sigma_2)};
+//      double expo;
+//      expo = exp(-dist2/(2*sigma_2));
      
-    return pref*expo;
+//     return pref*expo;
+
+// }
+
+// static void compute_force(std:: vector<coordinate>& forces, const std:: vector<coordinate>& positions){
+
+//      double dx, dy;
+//      double dist2;
+//      double force;
+
+//     for (int i=0; i<n_part; ++i){
+//         forces[i].x = forces[i].y = 0;
+//     }
+
+//     for (int i=0; i<n_part; ++i){
+//         for(int j=i+1; j<n_part; ++j){
+//             dist2 = compute_sq_distances(positions[i], positions[j], dx, dy);
+//             force = force_term(dist2);
+//             forces[i].x += force*dx;
+//             forces[i].y += force*dy;
+//             forces[j].x += -force*dx;
+//             forces[j].y += -force*dy;
+//         }
+//     }
+
+//     return;
+
+// }
+
+static coordinate get_force_ij(const coordinate position_i, const coordinate position_j){
+
+    const double dx {position_i.x - position_j.x};
+    const double dy {position_i.y - position_j.y};
+
+    const double squared_dist {dx*dx + dy*dy};
+
+    const double pref {-kappa/(2*sigma_2)};
+    const double expo_term {pref * exp(-squared_dist/(2*sigma_2))};
+
+    coordinate force_ij {expo_term*dx, expo_term*dy};
+
+    return force_ij;
 
 }
 
-static void compute_force(std:: vector<coordinate>& forces, const std:: vector<coordinate>& positions){
-
-     double dx, dy;
-     double dist2;
-     double force;
-
-    for (int i=0; i<n_part; ++i){
-        forces[i].x = forces[i].y = 0;
-    }
-
-    for (int i=0; i<n_part; ++i){
-        for(int j=i+1; j<n_part; ++j){
-            dist2 = compute_sq_distances(positions[i], positions[j], dx, dy);
-            force = force_term(dist2);
-            forces[i].x += force*dx;
-            forces[i].y += force*dy;
-            forces[j].x += -force*dx;
-            forces[j].y += -force*dy;
-        }
-    }
-
-    return;
-
-}
 
 static std::vector<std::vector<coordinate>> forces_for_all_tasks( THREADS, std::vector<coordinate>(n_part, coordinate{ .x = 0.0, .y = 0.0 }));
 static void compute_force_par(std::vector<coordinate>& forces, const std::vector<coordinate>& positions)
 {
 
-    double pref {-kappa/(2*sigma_2)};
     for (auto& forces_for_specific_task : forces_for_all_tasks)
         std::fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{ .x = 0.0, .y = 0.0 });
 
@@ -97,25 +113,33 @@ static void compute_force_par(std::vector<coordinate>& forces, const std::vector
     for (int i = 0; i < n_part; ++i) {
         for (int j = i + 1; j < n_part; ++j) {
 
-        double dx = positions[i].x - positions[j].x;
-        dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
-
-        double dy = positions[i].y - positions[j].y;
-        dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
-
-        double dist2 = dx * dx + dy * dy;
-
-        double expo = exp(-dist2 / (2 * sigma_2));
-
-        double force = pref * expo;
-
+        coordinate force_ij = get_force_ij(positions[i], positions[j]);
         std::vector<coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
-        forces_for_this_task[i].x += force * dx;
-        forces_for_this_task[i].y += force * dy;
-        forces_for_this_task[j].x += -force * dx;
-        forces_for_this_task[j].y += -force * dy;
+        forces_for_this_task[i].x += force_ij.x;
+        forces_for_this_task[i].y += force_ij.y;
+        forces_for_this_task[j].x += -force_ij.x;
+        forces_for_this_task[j].y += -force_ij.y;
+        
+        // double dx = positions[i].x - positions[j].x;
+        // dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
+
+        // double dy = positions[i].y - positions[j].y;
+        // dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
+
+        // double dist2 = dx * dx + dy * dy;
+
+        // double expo = exp(-dist2 / (2 * sigma_2));
+
+        // double force = pref * expo;
+
+        // std::vector<coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+        // forces_for_this_task[i].x += force * dx;
+        // forces_for_this_task[i].y += force * dy;
+        // forces_for_this_task[j].x += -force * dx;
+        // forces_for_this_task[j].y += -force * dy;
         }
     }
+
     // Sum all of the task-specific forces into the output parameter.
     std::fill(forces.begin(), forces.end(), coordinate{ .x = 0.0, .y = 0.0 });
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
@@ -351,6 +375,7 @@ static double get_msd(const std:: vector <coordinate>& positions, const std:: ve
     return 1./positions.size() * msd;
 
 }
+
 
 
 static double get_Tkin(const std:: vector <coordinate>& velocities){
