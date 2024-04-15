@@ -13,15 +13,26 @@
 constexpr double L {5};           // box volume = [-L,L]^n
 int N_iter {12000};
 constexpr int n_meas {1};
-constexpr int n_part {200};
+constexpr int n_part {1000};
 constexpr double beta {300};  
 
 constexpr double kappa {1./n_part};
-constexpr double sigma_2 {1};
 constexpr int randomseed {1};
 constexpr int THREADS = 10;
 
-constexpr double T_Tcrit = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2 * 0.5*kappa);
+// ########## FORCE CONSTANTS ################
+
+// Gaussian potential.
+constexpr double sigma_2_gauss {1}; // sigma^2
+constexpr double T_Tcrit_gauss = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2_gauss * 0.5*kappa);
+
+// Morse potential.
+constexpr double a_morse {1};
+constexpr double r_morse {0.5};
+constexpr double D_morse {1};
+//############################################
+
+
 constexpr double two_L {2*L};
 
 // RNG.
@@ -52,9 +63,9 @@ struct coordinate{
 
 // static double force_term(double& dist2){
 
-//      double pref {-kappa/(2*sigma_2)};
+//      double pref {-kappa/(2*sigma_2_gauss)};
 //      double expo;
-//      expo = exp(-dist2/(2*sigma_2));
+//      expo = exp(-dist2/(2*sigma_2_gauss));
      
 //     return pref*expo;
 
@@ -85,17 +96,51 @@ struct coordinate{
 
 // }
 
+
+static coordinate get_distances_ij(const coordinate position_i, const coordinate position_j){
+
+    double dx {position_i.x - position_j.x};
+    double dy {position_i.y - position_j.y};
+
+    dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
+    dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
+
+    coordinate distances {dx, dy};
+
+    return distances;
+
+}
+
+// ######## FORCES ###############################################################################
+
+// Gaussian potential.
+// static coordinate get_force_ij(const coordinate position_i, const coordinate position_j){
+
+//     const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
+    
+//     const double dist_sq {dist.x*dist.x + dist.y*dist.y};
+
+//     const double pref {-kappa/(2*sigma_2_gauss)};
+//     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
+
+//     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
+
+//     return force_ij;
+
+// }
+
+
+// Morse potential.
 static coordinate get_force_ij(const coordinate position_i, const coordinate position_j){
 
-    const double dx {position_i.x - position_j.x};
-    const double dy {position_i.y - position_j.y};
+    const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
+    
+    const double r {sqrt(dist.x*dist.x + dist.y*dist.y)};
 
-    const double squared_dist {dx*dx + dy*dy};
+    const double expo {exp(-a_morse * (r-r_morse))}; 
+    const double pref {-kappa * a_morse * D_morse * (expo-expo*expo) / r};
 
-    const double pref {-kappa/(2*sigma_2)};
-    const double expo_term {pref * exp(-squared_dist/(2*sigma_2))};
-
-    coordinate force_ij {expo_term*dx, expo_term*dy};
+    coordinate force_ij {pref*dist.x, pref*dist.y};
 
     return force_ij;
 
@@ -114,29 +159,14 @@ static void compute_force_par(std::vector<coordinate>& forces, const std::vector
         for (int j = i + 1; j < n_part; ++j) {
 
         coordinate force_ij = get_force_ij(positions[i], positions[j]);
+        
         std::vector<coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+        
         forces_for_this_task[i].x += force_ij.x;
         forces_for_this_task[i].y += force_ij.y;
         forces_for_this_task[j].x += -force_ij.x;
         forces_for_this_task[j].y += -force_ij.y;
         
-        // double dx = positions[i].x - positions[j].x;
-        // dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
-
-        // double dy = positions[i].y - positions[j].y;
-        // dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
-
-        // double dist2 = dx * dx + dy * dy;
-
-        // double expo = exp(-dist2 / (2 * sigma_2));
-
-        // double force = pref * expo;
-
-        // std::vector<coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
-        // forces_for_this_task[i].x += force * dx;
-        // forces_for_this_task[i].y += force * dy;
-        // forces_for_this_task[j].x += -force * dx;
-        // forces_for_this_task[j].y += -force * dy;
         }
     }
 
@@ -448,7 +478,7 @@ int main(int argc, char* argv[]){
     h_string << std::fixed << std::setprecision(2) << h;
     std:: string outputname {"results_h" + h_string.str() + "_gam" + argv[1] + "_N" + std::to_string(n_part) + "_seed" + std::to_string(seed) + ".csv"};
     
-    std::cout<< "Simulation at T/Tcrit="<<T_Tcrit<<" with gamma="<<gamma<<std::endl;
+    std::cout<< "Simulation at T/Tcrit="<<T_Tcrit_gauss<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
 
@@ -516,8 +546,8 @@ int main(int argc, char* argv[]){
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
     
-    // print_to_csv(outputname, position_samples, center_of_mass_distances, msds, Tkin, h, n_meas);
-    print_to_csv(outputname, center_of_mass_distances, msds, Tkin, h, n_meas);
+    print_to_csv(outputname, position_samples, center_of_mass_distances, msds, Tkin, h, n_meas);
+    // print_to_csv(outputname, center_of_mass_distances, msds, Tkin, h, n_meas);
 
     return 0;
 
