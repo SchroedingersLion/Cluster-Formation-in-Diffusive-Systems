@@ -12,7 +12,7 @@
 
 constexpr double L {5};           // box volume = [-L,L]^n
 int N_iter {12000};
-constexpr int n_meas {1};
+constexpr int n_meas {50};
 constexpr int n_part {1000};
 constexpr double beta {300};  
 
@@ -28,8 +28,8 @@ constexpr double T_Tcrit_gauss = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2_g
 
 // Morse potential.
 constexpr double a_morse {1};
-constexpr double r_morse {0.5};
-constexpr double D_morse {1};
+constexpr double r_morse {0.25};
+constexpr double D_morse {4};
 //############################################
 
 
@@ -42,59 +42,6 @@ struct coordinate{
     double x{0};
     double y{0};
 };
-
-
-
-// static double compute_sq_distances(const coordinate& pos1, const coordinate& pos2, 
-//                             double& dx, double& dy){
-    
-//     dx = pos1.x - pos2.x;
-//     if (dx > L)       dx -= two_L;
-//     else if (dx < -L) dx += two_L;
-
-
-//     dy = pos1.y - pos2.y;
-//     if (dy > L)       dy -= two_L;
-//     else if (dy < -L) dy += two_L;
-    
-//     return dx*dx + dy*dy;
-
-// }
-
-// static double force_term(double& dist2){
-
-//      double pref {-kappa/(2*sigma_2_gauss)};
-//      double expo;
-//      expo = exp(-dist2/(2*sigma_2_gauss));
-     
-//     return pref*expo;
-
-// }
-
-// static void compute_force(std:: vector<coordinate>& forces, const std:: vector<coordinate>& positions){
-
-//      double dx, dy;
-//      double dist2;
-//      double force;
-
-//     for (int i=0; i<n_part; ++i){
-//         forces[i].x = forces[i].y = 0;
-//     }
-
-//     for (int i=0; i<n_part; ++i){
-//         for(int j=i+1; j<n_part; ++j){
-//             dist2 = compute_sq_distances(positions[i], positions[j], dx, dy);
-//             force = force_term(dist2);
-//             forces[i].x += force*dx;
-//             forces[i].y += force*dy;
-//             forces[j].x += -force*dx;
-//             forces[j].y += -force*dy;
-//         }
-//     }
-
-//     return;
-
-// }
 
 
 static coordinate get_distances_ij(const coordinate position_i, const coordinate position_j){
