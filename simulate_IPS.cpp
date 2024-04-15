@@ -13,7 +13,7 @@
 constexpr double L {5};           // box volume = [-L,L]^n
 int N_iter {12000};
 constexpr int n_meas {1};
-constexpr int n_part {800};
+constexpr int n_part {200};
 constexpr double beta {300};  
 
 constexpr double kappa {1./n_part};
@@ -483,7 +483,7 @@ int main(int argc, char* argv[]){
         compute_force_par(forces, positions);
         B_step(velocities, forces, h_half);
 
-        if (i%1000==0) std::cout << "Iteration "<<i<< " done!\n";
+        if (i%1000==0) std::cout << "Iteration "<<i<< " done!" << std::endl;
 
     }
 
