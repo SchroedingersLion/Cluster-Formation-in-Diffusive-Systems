@@ -1,16 +1,12 @@
 #ifndef MEASUREMENT_H
 #define MEASUREMENT_H
 
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <vector>
-#define _USE_MATH_DEFINES
 #include <cmath>
-#include <random>
 #include <fstream>
-#include <chrono>
-#include <omp.h>
 #include <string>
-#include <sstream>
 #include <iomanip>
 
 #include "IPS_model.h"
