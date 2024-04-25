@@ -1,5 +1,5 @@
-#ifndef IPS_MODEL_H
-#define IPS_MODEL_H
+#ifndef MODEL_H
+#define MODEL_H
 
 #define _USE_MATH_DEFINES
 #include <iostream>
@@ -103,27 +103,4 @@ inline coordinate IPS_model:: get_force_ij_morse(const coordinate position_i, co
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif // IPS_MODEL
+#endif // MODEL

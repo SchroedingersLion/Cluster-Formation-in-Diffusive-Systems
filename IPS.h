@@ -1,0 +1,8 @@
+#ifndef IPS_H
+#define IPS_H
+
+#include "model.h"
+#include "measurement.h"
+#include "simulation.h"
+
+#endif // IPS_H
