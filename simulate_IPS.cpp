@@ -1,14 +1,5 @@
-#include <iostream>
-#include <vector>
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <random>
-#include <fstream>
-#include <chrono>
-#include <omp.h>
-#include <string>
-#include <sstream>
-#include <iomanip>
+#include "measurement.h"
+#include "omp.h"
 
 constexpr double L {5};           // box volume = [-L,L]^n
 int N_iter {12000};
@@ -32,19 +23,12 @@ constexpr double r_morse {0.25};
 constexpr double D_morse {4};
 //############################################
 
-
 constexpr double two_L {2*L};
 
 // RNG.
 std:: mt19937 twister;
 
-struct coordinate{
-    double x{0};
-    double y{0};
-};
-
-
-static coordinate get_distances_ij(const coordinate position_i, const coordinate position_j){
+inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, const coordinate position_j){
 
     double dx {position_i.x - position_j.x};
     double dy {position_i.y - position_j.y};
@@ -58,43 +42,9 @@ static coordinate get_distances_ij(const coordinate position_i, const coordinate
 
 }
 
-// ######## FORCES ###############################################################################
-
-// Gaussian potential.
-// static coordinate get_force_ij(const coordinate position_i, const coordinate position_j){
-
-//     const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
-    
-//     const double dist_sq {dist.x*dist.x + dist.y*dist.y};
-
-//     const double pref {-kappa/(2*sigma_2_gauss)};
-//     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
-
-//     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
-
-//     return force_ij;
-
-// }
 
 
-// Morse potential.
-static coordinate get_force_ij(const coordinate position_i, const coordinate position_j){
-
-    const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
-    
-    const double r {sqrt(dist.x*dist.x + dist.y*dist.y)};
-
-    const double expo {exp(-a_morse * (r-r_morse))}; 
-    const double pref {-kappa * a_morse * D_morse * (expo-expo*expo) / r};
-
-    coordinate force_ij {pref*dist.x, pref*dist.y};
-
-    return force_ij;
-
-}
-
-
-static std::vector<std::vector<coordinate>> forces_for_all_tasks( THREADS, std::vector<coordinate>(n_part, coordinate{ .x = 0.0, .y = 0.0 }));
+static std:: vector <std:: vector <coordinate>> forces_for_all_tasks( THREADS, std::vector<coordinate>(n_part, coordinate{ .x = 0.0, .y = 0.0 }));
 static void compute_force_par(std::vector<coordinate>& forces, const std::vector<coordinate>& positions)
 {
 
@@ -255,117 +205,6 @@ static void print_to_csv(const std:: string& outputname,
 }
 
 
-static void print_to_csv(const std:: string& outputname, 
-                        const std:: vector <float> center_of_mass_distance,
-                        const std:: vector <float> msds,
-                        const std:: vector <float> Tkin,
-                        const double stepsize, const double n_meas){    
-// Overloaded version without printing positions.
-
-    std:: ofstream file{outputname};
-    double time;
-    std:: cout << "Writing to file...\n";
-    file << "Time " << "com_distance " << "MSD " << "Tkin\n";
-    for ( size_t i = 0; i<center_of_mass_distance.size(); ++i )
-    {
-        time =  i*n_meas*stepsize;
-        file << time << " " << center_of_mass_distance[i] << " " << msds[i] << " " << Tkin[i] << "\n";    
-        
-    }
-
-    file.close();
-
-}
-
-
-
-static double get_center_of_mass_distance(const std:: vector <coordinate>& positions){
-// We use the method of  
-// L. Bai and D. Breen, ``Calculating Center of Mass in an Unbounded 2D Environment,'' 
-// Journal of Graphics Tools, Vol. 13, No. 4, December 2008, pp. 53-60. 
-
-    // Compute center of mass.
-    coordinate center_of_mass;
-    const double pref = 2*M_PI/two_L;
-    const double pref2 = 1/pref;
-    coordinate xi, zeta, theta;
-
-    for (const auto pos : positions){
-        
-        theta.x = pref*pos.x;
-        xi.x += cos(theta.x);
-        zeta.x += sin(theta.x);
-
-        theta.y = pref*pos.y;
-        xi.y += cos(theta.y);
-        zeta.y += sin(theta.y);
-
-    }
-    xi.x *= pref2/n_part;
-    xi.y *= pref2/n_part;
-    zeta.x *= pref2/n_part;
-    zeta.y *= pref2/n_part;
-
-    center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
-    center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
-
-
-    // Compute distance to COM.
-    float dist {0}, dist_x {0}, dist_y{0};
-    for (const auto pos : positions){
-        dist_x = pos.x - center_of_mass.x;
-        dist_y = pos.y - center_of_mass.y;
-
-        if (dist_x > L)       dist_x -= two_L;  // periodic boundaries.
-        else if (dist_x < -L) dist_x += two_L;
-        if (dist_y > L)       dist_y -= two_L;
-        else if (dist_y < -L) dist_y += two_L;
-        
-        dist += sqrt(dist_x*dist_x + dist_y*dist_y);
-
-    }
-
-    return dist/n_part;
-
-}
-
-
-static double get_msd(const std:: vector <coordinate>& positions, const std:: vector <coordinate>& init_positions){
-
-    coordinate diff;
-    double msd {0};
-
-    for(int i=0; i<positions.size(); ++i){
-        
-        diff.x = positions[i].x - init_positions[i].x;
-        diff.y = positions[i].y - init_positions[i].y;
-
-        if (diff.x > L)         diff.x -= two_L;
-        else if (diff.x < -L)   diff.x += two_L;
-        if (diff.y > L)         diff.y -= two_L;
-        else if (diff.y < -L)   diff.y += two_L;
-
-        msd += diff.x*diff.x + diff.y*diff.y;
-
-    }
-
-    return 1./positions.size() * msd;
-
-}
-
-
-
-static double get_Tkin(const std:: vector <coordinate>& velocities){
-
-    double Tkin {0};
-
-    for(auto vel : velocities){
-        Tkin += vel.x*vel.x + vel.y*vel.y;
-    }
-
-    return Tkin/(2*velocities.size());
-
-}
 
 
 static std:: vector <coordinate> set_initial_positions(int seed){
@@ -499,3 +338,5 @@ int main(int argc, char* argv[]){
     return 0;
 
 }
+
+
