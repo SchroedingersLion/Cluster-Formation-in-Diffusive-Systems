@@ -1,5 +1,4 @@
-#include "measurement.h"
-#include "omp.h"
+#include "IPS.h"
 
 constexpr double L {5};           // box volume = [-L,L]^n
 int N_iter {12000};
