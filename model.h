@@ -9,12 +9,13 @@
 #include <iomanip>
 
 
-struct coordinate{
+struct coordinate{    // Used to denote positions, velocities and forces.
     double x{0};
     double y{0};
 };
 
 
+// ###################### Model CLASS DEFINITION ##################################################################################
 
 class IPS_model {
 
@@ -62,10 +63,10 @@ class IPS_model {
         //##################################################################################################################################
 
 };
+// ##################### END OF CLASS DEFINITION ##############################################
 
 
-
-
+// ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
 
 // Gaussian potential.
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
@@ -101,6 +102,7 @@ inline coordinate IPS_model:: get_force_ij_morse(const coordinate position_i, co
 
 }
 
+// ########### END OF MEMBER DEFINITIONS ##############################################
 
 
 #endif // MODEL
