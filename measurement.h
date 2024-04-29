@@ -27,7 +27,7 @@ class measurement {
     public:
 
         // CONSTRUCTOR.
-        measurement(const int method_type, const int burnin, const int t_meas, const int n_dist, const int max_iter)
+        measurement(const int n_meas, const int Niter)
             : n_meas {n_meas}, max_iter {max_iter}
             {
                 
