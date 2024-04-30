@@ -1,6 +1,7 @@
 #ifndef IPS_H
 #define IPS_H
 
+#include "argparser.h"
 #include "model.h"
 #include "measurement.h"
 #include "simulation.h"

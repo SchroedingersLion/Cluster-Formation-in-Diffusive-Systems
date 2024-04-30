@@ -2,18 +2,35 @@
 
 int main(int argc, char* argv[]){
 
-    const double gamma = atof(argv[1]);
-    const double h = atof(argv[2]);
-    const int N_iter = atoi(argv[3]);
-    const int seed = atoi(argv[4]);
 
-    int n_meas = 1;
+    // Parse command line
+    auto [result, options] = parseCommandLine(argc, argv);
 
-    double beta=300; 
+    // Check if help option is provided
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        return 0;
+    }
 
-    std:: string outputname = "test_output.csv";
+    // Process parsed values
+    ParsedValues values = processParsedValues(result);
 
-    std::string force = "morse";
+
+
+
+    // const double gamma = atof(argv[1]);
+    // const double h = atof(argv[2]);
+    // const int N_iter = atoi(argv[3]);
+    // const int seed = atoi(argv[4]);
+
+    // int n_meas = 1;
+
+    // double beta=300; 
+
+    // std:: string outputname = "test_output.csv";
+
+    // std::string force = "morse";
+    
     IPS_model sys(1000, 5, force);
 
     measurement meas(n_meas, N_iter);
