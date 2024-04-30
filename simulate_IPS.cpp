@@ -12,7 +12,7 @@
 
 constexpr double L {5};           // box volume = [-L,L]^n
 int N_iter {12000};
-constexpr int n_meas {50};
+constexpr int n_meas {1};
 constexpr int n_part {1000};
 constexpr double beta {300};  
 
@@ -493,8 +493,8 @@ int main(int argc, char* argv[]){
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
     
-    print_to_csv(outputname, position_samples, center_of_mass_distances, msds, Tkin, h, n_meas);
-    // print_to_csv(outputname, center_of_mass_distances, msds, Tkin, h, n_meas);
+    // print_to_csv(outputname, position_samples, center_of_mass_distances, msds, Tkin, h, n_meas);
+    print_to_csv(outputname, center_of_mass_distances, msds, Tkin, h, n_meas);
 
     return 0;
 
