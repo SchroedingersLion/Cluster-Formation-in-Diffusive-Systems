@@ -18,7 +18,7 @@ constexpr double beta {300};
 
 constexpr double kappa {1./n_part};
 constexpr int randomseed {1};
-constexpr int THREADS = 10;
+constexpr int THREADS = 4;
 
 // ########## FORCE CONSTANTS ################
 
@@ -463,7 +463,7 @@ int main(int argc, char* argv[]){
         
         if (i % n_meas == 0){  // Take measurement.
         
-            position_samples[k] = positions;
+            // position_samples[k] = positions;
             center_of_mass_distances[k] = get_center_of_mass_distance(positions);
             msds[k] = get_msd(positions, init_positions);
             Tkin[k] = get_Tkin(velocities);
