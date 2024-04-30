@@ -7,6 +7,7 @@
 #include "measurement.h"
 
 #include <omp.h>
+#include <random>
 #include <chrono>
 #include <iostream>
 #include <vector>
@@ -23,13 +24,13 @@ class simulation {
     public: 
 
         // CONSTRUCTOR.
-        simulation (IPS_model& model, measurement measurement, const double stepsize=0.01, const double beta=300, const double gamma=1, const int Niter=10000, const int threads=4, const std:: string integrator="BAOAB", const std:: string init_mode="uniform", const int randomseed=1 )
-            : model {model}, measurement {measurement}, stepsize {stepsize}, beta {beta}, gamma {gamma}, Niter {Niter}, THREADS {threads}, integrator {integrator}, init_mode {init_mode}, randomseed {randomseed}
+        simulation (IPS_model& model, measurement& meas, const double stepsize=0.01, const double beta=300, const double gamma=1, const int N_iter=10000, const int threads=4, const std:: string integrator="BAOAB", const std:: string init_mode="uniform", const int randomseed=1 )
+            : model {model}, measurement_obj {meas}, stepsize {stepsize}, beta {beta}, gamma {gamma}, N_iter {N_iter}, THREADS {threads}, integrator {integrator}, init_mode {init_mode}, randomseed {randomseed}
             {
 
                 // Specify force field.
-                if (integrator=="BAOAB") integrator_step = &BAOAB_step;
-                else if (integrator=="UBU") integrator_step = &UBU_step;
+                if (integrator=="BAOAB") integrator_step = &simulation:: BAOAB_step;
+                else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
                 else throw std:: invalid_argument( "Invalid integrator in simulation construction. Allowed are 'BAOAB' and 'UBU'." );
 
                 // Check initialization mode.
@@ -49,16 +50,18 @@ class simulation {
         
         std:: mt19937 twister;
         IPS_model model;
+        measurement measurement_obj;
         const double stepsize;
         const double beta;
         const double gamma;
-        const int Niter;
+        const int N_iter;
         const int THREADS;
         std:: vector <std:: vector <coordinate>> forces_for_all_tasks;
         const std:: string integrator;  
         const std:: string init_mode;
         const int randomseed;
-        void (*integrator_step) ();
+        void (simulation::* integrator_step)();
+        void compute_force_par();
         void A_step(const double h);
         void B_step(const double h);
         void O_step(const double h);
@@ -92,11 +95,13 @@ inline void simulation:: set_initial_position(){
     for (int iy=0; iy<Ny; ++iy){
         for(int ix=0; ix<Nx; ++ix){
 
-            model.positions[iy*Nx + ix].x = -L_mod + ix*dx;
-            model.positions[iy*Nx + ix].y = -L_mod + iy*dy;
+            model.init_positions[iy*Nx + ix].x = -L_mod + ix*dx;
+            model.init_positions[iy*Nx + ix].y = -L_mod + iy*dy;
 
         }
     }
+
+    model.positions = model.init_positions;
 
 }
 
@@ -108,15 +113,17 @@ inline void simulation:: set_initial_position(const int seed){
     twister.seed(seed);
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
     for (int i=0; i<model.n_part; ++i){
-        model.positions[i].x = box_uniform(twister);
-        model.positions[i].y = box_uniform(twister);
+        model.init_positions[i].x = box_uniform(twister);
+        model.init_positions[i].y = box_uniform(twister);
     }
+
+    model.positions = model.init_positions;
 
 }
 
 
 
-inline void compute_force_par()
+inline void simulation:: compute_force_par()
 {
 
     for (auto& forces_for_specific_task : forces_for_all_tasks)
@@ -126,7 +133,8 @@ inline void compute_force_par()
     for (int i = 0; i < model.n_part; ++i) {
         for (int j = i + 1; j < model.n_part; ++j) {
 
-        coordinate force_ij = model.get_force_ij(model.positions[i], model.positions[j]);
+        // coordinate force_ij = (model.*get_force_ij)(model.positions[i], model.positions[j]);
+        coordinate force_ij = (model.*(model.get_force_ij))(model.positions[i], model.positions[j]);  // This member function pointer syntax is terrible!
         
         std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
         
@@ -154,7 +162,7 @@ inline void simulation:: A_step(const double h){
 
     for (int i=0; i<model.n_part; ++i){
         model.positions[i].x += h*model.velocities[i].x;
-        mdoel.ositions[i].y += h*model.velocities[i].y;
+        model.positions[i].y += h*model.velocities[i].y;
     }
 
 }
@@ -271,7 +279,7 @@ inline void simulation:: BAOAB_step(){
     B_step(h_half);
     A_step(h_half);
     apply_periodic_boundaries();
-    O_step(h);
+    O_step(stepsize);
     A_step(h_half);
     apply_periodic_boundaries();
     compute_force_par();
@@ -288,15 +296,15 @@ inline void simulation:: run(){
     // Prepare simulation.
 
     // Set positions.
-    if (init_mode == "uniform") set_initial_position(seed);
-    else if (init mode == "grid") set_initial_position();
+    if (init_mode == "uniform") set_initial_position(randomseed);
+    else if (init_mode == "grid") set_initial_position();
 
     const std:: vector <coordinate> init_positions {model.positions};  // Needed for MSD computation.
 
-    std:: fill(model.velocities.begin(), model.velocities.end(), 0);  // Reset velocities.
+    std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
 
     // Seed RNG for simulation.
-    twister.seed(seed);
+    twister.seed(randomseed);
 
     // Set forces.
     compute_force_par();
@@ -304,14 +312,14 @@ inline void simulation:: run(){
 
     // Main loop.
     std:: normal_distribution<> normal{0,1};
-    const double h_half = 0.5 * h;
+    const double h_half = 0.5 * stepsize;
 
-    auto t1 = std:: chrono::high_resolution_clock::now();
+    auto t1 = std:: chrono:: high_resolution_clock:: now();
     for (int i=0; i<=N_iter; ++i){
         
-        if (i % n_meas == 0) measurement.take_measurement(model);
+        if (i % measurement_obj.n_meas == 0) measurement_obj.take_measurement(model);
 
-        integrator_step();
+        (this->*integrator_step)();
 
         if (i%1000==0) std:: cout << "Iteration "<<i<< " done!" << std:: endl;
 

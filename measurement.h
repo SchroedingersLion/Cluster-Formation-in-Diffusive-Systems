@@ -9,7 +9,7 @@
 #include <string>
 #include <iomanip>
 
-#include "IPS_model.h"
+#include "model.h"
 
 /*  This is the measurement class that is used by the simulation to take measurements of user-specified quantities. 
     In order to modify what observables are collected, the user has to do 2 things:
@@ -26,9 +26,12 @@ class measurement {
 
     public:
 
+        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
+        const int n_meas;  // Number of iterations after which measure. (having this in here is ugly actually).
+
         // CONSTRUCTOR.
-        measurement(const int n_meas, const int Niter)
-            : n_meas {n_meas}, max_iter {max_iter}
+        measurement(const int n_meas, const int N_iter)
+            : n_meas {n_meas}, N_iter {N_iter}
             {
                 
                 /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
@@ -82,12 +85,11 @@ class measurement {
         
         float stepsize;            /* Stepsize used in the simulation (set by the simulation)
                                       This is needed to obtain the correct simulation times at which measurements are taken. */
-        std:: vector <float> time; // Times at which measurements are taken (printed to output file together with results).
+        std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
         std:: vector <std:: string> col_names; // Names of the columns in the output file (names of the observables).
 
-        const int max_iter;  // Number of iterations in the simulation.
-        const int n_meas;    // Number of iterations after which measure. (having these two in here is ugly actually).
+        const int N_iter;  // Number of iterations in the simulation.(having this in here is ugly actually).
         
         void add_to_results();
 
@@ -111,11 +113,12 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
 
     // Compute center of mass.
     coordinate center_of_mass;
-    const double pref = 2*M_PI/two_L;
-    const double pref2 = 1/pref;
+    const double two_L {2*model.L};
+    const double pref {2*M_PI/two_L};
+    const double pref2 {1/pref};
     coordinate xi, zeta, theta;
 
-    for (const auto pos : positions){
+    for (const auto pos : model.positions){
         
         theta.x = pref*pos.x;
         xi.x += cos(theta.x);
@@ -126,10 +129,10 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
         zeta.y += sin(theta.y);
 
     }
-    xi.x *= pref2/n_part;
-    xi.y *= pref2/n_part;
-    zeta.x *= pref2/n_part;
-    zeta.y *= pref2/n_part;
+    xi.x *= pref2/model.n_part;
+    xi.y *= pref2/model.n_part;
+    zeta.x *= pref2/model.n_part;
+    zeta.y *= pref2/model.n_part;
 
     center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
     center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
@@ -137,20 +140,20 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
 
     // Compute distance to COM.
     float dist {0}, dist_x {0}, dist_y{0};
-    for (const auto pos : positions){
+    for (const auto pos : model.positions){
         dist_x = pos.x - center_of_mass.x;
         dist_y = pos.y - center_of_mass.y;
 
-        if (dist_x > L)       dist_x -= two_L;  // periodic boundaries.
-        else if (dist_x < -L) dist_x += two_L;
-        if (dist_y > L)       dist_y -= two_L;
-        else if (dist_y < -L) dist_y += two_L;
+        if (dist_x > model.L)       dist_x -= two_L;  // periodic boundaries.
+        else if (dist_x < -model.L) dist_x += two_L;
+        if (dist_y > model.L)       dist_y -= two_L;
+        else if (dist_y < -model.L) dist_y += two_L;
         
         dist += sqrt(dist_x*dist_x + dist_y*dist_y);
 
     }
 
-    return dist/n_part;
+    return dist/model.n_part;
 
 }    
 
@@ -159,23 +162,23 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
 inline float measurement:: get_msd(const IPS_model& model){
     
     coordinate diff;
-    double msd {0};
+    double msd {0}, two_L {2*model.L};
 
-    for(int i=0; i<positions.size(); ++i){
+    for(int i=0; i<model.positions.size(); ++i){
         
-        diff.x = positions[i].x - init_positions[i].x;
-        diff.y = positions[i].y - init_positions[i].y;
+        diff.x = model.positions[i].x - model.init_positions[i].x;
+        diff.y = model.positions[i].y - model.init_positions[i].y;
 
-        if (diff.x > L)         diff.x -= two_L;
-        else if (diff.x < -L)   diff.x += two_L;
-        if (diff.y > L)         diff.y -= two_L;
-        else if (diff.y < -L)   diff.y += two_L;
+        if (diff.x > model.L)         diff.x -= two_L;
+        else if (diff.x < -model.L)   diff.x += two_L;
+        if (diff.y > model.L)         diff.y -= two_L;
+        else if (diff.y < -model.L)   diff.y += two_L;
 
         msd += diff.x*diff.x + diff.y*diff.y;
 
     }
 
-    return 1./positions.size() * msd;
+    return 1./model.positions.size() * msd;
 }
 
 
@@ -184,11 +187,11 @@ inline float measurement:: get_Tkin(const IPS_model& model){
 
     double Tkin {0};
 
-    for(auto vel : velocities){
+    for(auto vel : model.velocities){
         Tkin += vel.x*vel.x + vel.y*vel.y;
     }
 
-    return Tkin/(2*velocities.size());
+    return Tkin/(2*model.velocities.size());
 
 }
 
@@ -222,7 +225,7 @@ inline void measurement:: print_to_csv(const std:: string outputname){
     // Write times and results array.
     for ( size_t i=0; i<times.size(); ++i )
     {
-        file << times[i] << " " 
+        file << times[i] << " "; 
         for (size_t j=0; j<no_observables; ++j) file << results[i][j] << " ";
         file << "\n";
     }

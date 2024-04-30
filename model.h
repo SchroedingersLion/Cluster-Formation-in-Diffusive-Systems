@@ -21,35 +21,39 @@ class IPS_model {
 
     public: 
 
-        std:: vector <coordinate> positions, velocities, forces;
-        coordinate (*get_force_ij) (const coordinate, const coordinate); // Points to interaction function between two particles.
+        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
+        const double L;                 // Box volume = [-L,L]^2.
+        const int n_part;               // No. of particles.
+        std:: vector <coordinate> positions, init_positions, velocities, forces;
+        coordinate (IPS_model::* get_force_ij) (const coordinate, const coordinate); // Points to interaction function between two particles.
 
         // CONSTRUCTOR.
-        IPS_model(const int n_part=1000, const double L=5, const double kappa=1./n_part, 
+        IPS_model(const int n_part=1000, const double L=5, 
                   const std:: string& forcefield = "gauss")
-            : n_part {n_part}, L {L}, kappa {kappa}, forcefield {forcefield} 
+            : n_part {n_part}, L {L}, kappa {1./n_part}, forcefield {forcefield} 
             {
 
                 // Resize vectors.
                 positions.resize(n_part);
+                init_positions.resize(n_part);
                 velocities.resize(n_part);
                 forces.resize(n_part);
 
                 // Specify force field.
-                if (forcefield=="gauss") get_force_ij = &get_force_ij_gauss;
-                else if (forcefield=="morse") get_force_ij = &get_force_ij_morse;
+                if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
+                else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
                 else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss' and 'morse'." );
 
             }
 
     private:
 
-        const double L;                 // Box volume = [-L,L]^2.
-        const int n_part;               // No. of particles.
         const double kappa;             // Interaction potential prefactor (see paper).
         const std:: string forcefield;  // Specifies interaction potential.
         
         // ########## FORCES ###############################################################################################################
+        coordinate get_distances_ij(const coordinate position_i, const coordinate position_j);
+        
         // Gaussian potential.
         const double sigma_2_gauss {1}; // sigma^2.
         // const double T_Tcrit_gauss = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2_gauss * 0.5*kappa);
@@ -67,6 +71,22 @@ class IPS_model {
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
+inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, const coordinate position_j){
+
+    const double two_L {2*L};
+
+    double dx {position_i.x - position_j.x};
+    double dy {position_i.y - position_j.y};
+
+    dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
+    dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
+
+    coordinate distances {dx, dy};
+
+    return distances;
+
+}
+
 
 // Gaussian potential.
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
