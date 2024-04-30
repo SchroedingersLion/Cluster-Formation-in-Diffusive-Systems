@@ -28,6 +28,8 @@ class measurement {
 
         // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
         const int n_meas;  // Number of iterations after which measure. (having this in here is ugly actually).
+        float stepsize;            /* Stepsize used in the simulation (set by the simulation)
+                                      This is needed to obtain the correct simulation times at which measurements are taken. */
 
         // CONSTRUCTOR.
         measurement(const int n_meas, const int N_iter)
@@ -57,10 +59,10 @@ class measurement {
             /* ########### COMPUTE CURRENT OBSERVABLE VALUES FROM PARAMETERS ########
                The number of entries in vector "observables" must correspond to member variable "no_observables" set by the user
                in the constructor above. */          
+            
             observables[0] = get_center_of_mass_distance(model);
             observables[1] = get_msd(model);
             observables[2] = get_Tkin(model);
-            
             
             col_names[0] = "COM";
             col_names[1] = "MSD";
@@ -83,8 +85,6 @@ class measurement {
         std:: vector <std:: vector <float>> results;   // Results array accumulating observable values in time (will be printed to file).
         int k {0};                                     // Current index of results array to store measurements in.
         
-        float stepsize;            /* Stepsize used in the simulation (set by the simulation)
-                                      This is needed to obtain the correct simulation times at which measurements are taken. */
         std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
         std:: vector <std:: string> col_names; // Names of the columns in the output file (names of the observables).
@@ -226,7 +226,7 @@ inline void measurement:: print_to_csv(const std:: string outputname){
     for ( size_t i=0; i<times.size(); ++i )
     {
         file << times[i] << " "; 
-        for (size_t j=0; j<no_observables; ++j) file << results[i][j] << " ";
+        for (size_t j=0; j<no_observables; ++j) file << results[j][i] << " ";
         file << "\n";
     }
 

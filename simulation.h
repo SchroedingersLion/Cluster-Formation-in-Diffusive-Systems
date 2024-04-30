@@ -49,8 +49,8 @@ class simulation {
     private:
         
         std:: mt19937 twister;
-        IPS_model model;
-        measurement measurement_obj;
+        IPS_model& model;
+        measurement& measurement_obj;
         const double stepsize;
         const double beta;
         const double gamma;
@@ -294,6 +294,9 @@ inline void simulation:: run(){
     //  std::cout<< "Simulation at T/Tcrit="<<T_Tcrit_gauss<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
+
+    // Pass stepsize to measurement object (needed to fill times vector).
+    measurement_obj.stepsize = stepsize;
 
     // Set positions.
     if (init_mode == "uniform") set_initial_position(randomseed);
