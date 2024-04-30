@@ -43,6 +43,12 @@ class measurement {
                 observables.resize(no_observables);
                 results.resize(no_observables);
                 col_names.resize(no_observables);
+
+                /*################# ENTER NAMES OF OBSERVABLES (WILL BE HEADER OF OUTPUTFILE)####*/
+                col_names[0] = "COM";
+                col_names[1] = "MSD";
+                col_names[2] = "Tkin";
+                /*################################################################################*/
                 
                 int no_of_measurements {N_iter / n_meas + 1};
                 
@@ -63,10 +69,6 @@ class measurement {
             observables[0] = get_center_of_mass_distance(model);
             observables[1] = get_msd(model);
             observables[2] = get_Tkin(model);
-            
-            col_names[0] = "COM";
-            col_names[1] = "MSD";
-            col_names[2] = "Tkin";
             /*########################################################################*/
 
             add_to_results();  // Add new observables to results array and adds new time value.
