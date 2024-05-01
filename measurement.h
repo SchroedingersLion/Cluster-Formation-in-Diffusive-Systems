@@ -32,8 +32,8 @@ class measurement {
                                       This is needed to obtain the correct simulation times at which measurements are taken. */
 
         // CONSTRUCTOR.
-        measurement(const int N_meas, const int Niter)
-            : N_meas {N_meas}, Niter {Niter}
+        measurement(const int N_meas, const int N_iter)
+            : N_meas {N_meas}, N_iter {N_iter}
             {
                 
                 /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
@@ -50,7 +50,7 @@ class measurement {
                 col_names[2] = "Tkin";
                 /*################################################################################*/
                 
-                int no_of_measurements {Niter / N_meas + 1};
+                int no_of_measurements {N_iter / N_meas + 1};
                 
                 for (auto& observable_vector : results) observable_vector.resize(no_of_measurements);
                 times.resize(no_of_measurements);
@@ -71,7 +71,7 @@ class measurement {
             observables[2] = get_Tkin(model);
             /*########################################################################*/
 
-            add_to_results();  // Add new observables to results array and adds new time value.
+            add_to_results();  // Add new observables to results array and add new time value.
 
             return;
 
@@ -91,7 +91,7 @@ class measurement {
 
         std:: vector <std:: string> col_names; // Names of the columns in the output file (names of the observables).
 
-        const int Niter;  // Number of iterations in the simulation.(having this in here is ugly actually).
+        const int N_iter;  // Number of iterations in the simulation.(having this in here is ugly actually).
         
         void add_to_results();
 
