@@ -23,7 +23,7 @@ class IPS_model {
 
         // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES
         const double L;                // Box volume = [-L,L]^2.
-        const int N_particles;               // No. of particles.
+        const int N_particles;         // No. of particles.
         std:: vector <coordinate> positions, init_positions, velocities, forces;
         coordinate (IPS_model::* get_force_ij) (const coordinate, const coordinate); // Points to interaction function between two particles.
 
@@ -34,6 +34,9 @@ class IPS_model {
                   kappa {1./N_particles}, 
                   forcefield {forcefield} 
             {
+
+                std:: cout  << "Building IPS model with boxlength " << boxlength << " and " << N_particles << " particles.\n"
+                            << "Forcefield: " << forcefield << std:: endl;
 
                 // Resize vectors.
                 positions.resize(N_particles);

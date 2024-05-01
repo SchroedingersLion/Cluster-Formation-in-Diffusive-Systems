@@ -46,10 +46,20 @@ class simulation {
                     seed {seed}
             {
 
+                std:: cout << "\nCreate simulation with integrator " << integrator << ",\n"
+                           << "stepsize " << stepsize << ",\n"
+                           << "gamma " << gamma << ",\n"
+                           << "beta " << beta << ",\n"
+                           << N_iter << " iterations.\n"
+                           << "Using " << THREADS << " threads for force calculations. \n"
+                           << "Mode of initialization: " << init_mode << ".\n"
+                           << "Randomseed " << seed << ".\n"
+                           << "Taking a measurement any " << meas.N_meas << " steps.\n" << std:: endl;
+
                 // Specify force field.
                 if (integrator=="BAOAB") integrator_step = &simulation:: BAOAB_step;
                 else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
-                else throw std:: invalid_argument( "Invalid integrator in simulation construction. Allowed are 'BAOAB' and 'UBU'." );
+                else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'BAOAB' and 'UBU'." );
 
                 // Check initialization mode.
                 if (init_mode!="uniform" && init_mode!="grid") throw std:: invalid_argument("Invalid mode of initialization. Allowed are 'uniform' or 'grid'.");

@@ -21,53 +21,38 @@ const std:: string  _seed_default {"1"};
 const std:: string  _output_name_default {"results.csv"};
 
 
-
-// std:: pair <cxxopts:: ParseResult, cxxopts:: Options> parseCommandLine(int argc, char* argv[]) {
-//     cxxopts::Options options("MyProgram""Description");
-
-//     // Define command line options
-//     options.add_options()
-//         ("N_particles",  "Number of particles.",                                         cxxopts:: value <int>()->default_value("1000"))
-//         ("boxlength",   "Length of edge of square simulation box.",                     cxxopts:: value <double>()->default_value("10"))
-//         ("forcefield",  "Forcefield between two particles. Either 'gauss' or 'morse'.", cxxopts:: value <std:: string>()->default_value("gauss"))
-//         ("init_mode",   "Initial positions of the system. Either 'uniform' or 'grid'.", cxxopts:: value <std:: string>()->default_value("uniform"))
-//         ("beta",        "Inverse temperature parameter in Langevin dynamics.",          cxxopts:: value <double>()->default_value("10"))
-//         ("gamma",       "Friction parameter in Langevin dynamics.",                     cxxopts:: value <double>()->default_value("0.1"))
-//         ("N_iter",       "Number of simulation steps.",                                  cxxopts:: value <int>()->default_value("10000"))
-//         ("stepsize",    "Simulation stepsize.",                                         cxxopts:: value <double>()->default_value("0.01"))
-//         ("N_meas",       "Take a measurement any 'N_meas' iterations.",                   cxxopts:: value <int>()->default_value("10"))
-//         ("integrator",  "Integrator to be used. Either 'BAOAB' or 'UBU'.",              cxxopts:: value <std:: string>()->default_value("BAOAB"))
-//         ("threads",     "Number of threads used in the force evaluation.",              cxxopts:: value <int>()->default_value("4"))
-//         ("seed",        "Randomseed.",                                                  cxxopts:: value <int>()->default_value("1"))
-//         ("output_name", "Name of the printed file holding the results.",                cxxopts:: value <std:: string>()->default_value("results_test.csv"))               
-//         ("help",        "Print help");
-
-//     // Parse command line
-//     return {options.parse(argc, argv), options};
-// }
 std:: pair <cxxopts:: ParseResult, cxxopts:: Options> parseCommandLine(int argc, char* argv[]) {
-    cxxopts::Options options("MyProgram", "Description");
+std::string description = R"(
+    To run a simulation use IPS.exe and use the flags below to control the settings.
+    The program will print a .csv file containing time series data of the mean center of mass
+    distance, the mean-squared-displacement, and the kinetic temperature.
 
-    // Define command line options
+    If the --traj flag is passed, the whole trajectory (i.e. all positions of all particles in time)
+    is printed to a separate file traj.csv.
+    )";
+    cxxopts::Options options("IPS.exe", description);
+
+    // Define command line options.
     options.add_options()
-        ("N_particles",  "Number of particles.",                                         cxxopts:: value <int>()->default_value(_N_particles_default))
+        ("N_particles",  "Number of particles.",                                        cxxopts:: value <int>()->default_value(_N_particles_default))
         ("boxlength",   "Length of edge of square simulation box.",                     cxxopts:: value <double>()->default_value(_boxlength_default))
         ("forcefield",  "Forcefield between two particles. Either 'gauss' or 'morse'.", cxxopts:: value <std:: string>()->default_value(_forcefield_default))
         ("init_mode",   "Initial positions of the system. Either 'uniform' or 'grid'.", cxxopts:: value <std:: string>()->default_value(_init_mode_default))
         ("beta",        "Inverse temperature parameter in Langevin dynamics.",          cxxopts:: value <double>()->default_value(_beta_default))
         ("gamma",       "Friction parameter in Langevin dynamics.",                     cxxopts:: value <double>()->default_value(_gamma_default))
-        ("N_iter",       "Number of simulation steps.",                                  cxxopts:: value <int>()->default_value(_N_iter_default))
+        ("N_iter",       "Number of simulation steps.",                                 cxxopts:: value <int>()->default_value(_N_iter_default))
         ("stepsize",    "Simulation stepsize.",                                         cxxopts:: value <double>()->default_value(_stepsize_default))
-        ("N_meas",       "Take a measurement any 'N_meas' iterations.",                   cxxopts:: value <int>()->default_value(_N_meas_default))
+        ("N_meas",       "Take a measurement any 'N_meas' iterations.",                 cxxopts:: value <int>()->default_value(_N_meas_default))
         ("integrator",  "Integrator to be used. Either 'BAOAB' or 'UBU'.",              cxxopts:: value <std:: string>()->default_value(_integrator_default))
         ("threads",     "Number of threads used in the force evaluation.",              cxxopts:: value <int>()->default_value(_threads_default))
         ("seed",        "Randomseed.",                                                  cxxopts:: value <int>()->default_value(_seed_default))
         ("output_name", "Name of the printed file holding the results.",                cxxopts:: value <std:: string>()->default_value(_output_name_default))               
         ("help",        "Print help");
 
-    // Parse command line
+    // Parse command line.
     return {options.parse(argc, argv), options};
 }
+
 
 struct ParsedValues{
     int N_particles;
@@ -85,13 +70,10 @@ struct ParsedValues{
     std:: string output_name;
 };
 
-    // if (result.count("arg1")) {
-    //     arg1 = result["arg1"].as<int>();
-    // } else {
-    //     arg1 = default_value;
-    // }
+
 ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
-    // Access parsed values
+    
+    // Access parsed values.
     ParsedValues values;
 
     values.N_particles = result.count("N_particles") ?   result["N_particles"].as<int>()        : std:: stoi(_N_particles_default);
@@ -110,27 +92,6 @@ ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
 
     return values;
 }
-
-// ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
-//     // Access parsed values
-//     ParsedValues values;
-
-//     values.N_particles   =   result["N_particles"].as<int>();
-//     values.boxlength    =   result["boxlength"].as<double>();
-//     values.forcefield   =   result["forcefield"].as<std:: string>();
-//     values.init_mode    =   result["init_mode"].as<std:: string>();
-//     values.beta         =   result["beta"].as<double>();
-//     values.gamma        =   result["gamma"].as<double>();
-//     values.N_iter        =   result["N_iter"].as<double>();
-//     values.stepsize     =   result["stepsize"].as<double>();
-//     values.N_meas       =   result["N_meas"].as<int>();
-//     value.integrator    =   result["integrator"].as<std:: string>();
-//     value.threads       =   result["threads"].as<int>();
-//     value.seed          =   result["seed"].as<int>();
-//     value.output_name   =   result["output_name"].as<std:: string>();
-
-//     return values;
-// }
 
 
 #endif // ARGPARSER_H
