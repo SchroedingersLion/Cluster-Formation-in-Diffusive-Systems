@@ -24,8 +24,26 @@ class simulation {
     public: 
 
         // CONSTRUCTOR.
-        simulation (IPS_model& model, measurement& meas, const double stepsize=0.01, const double beta=300, const double gamma=1, const int N_iter=10000, const int threads=4, const std:: string integrator="BAOAB", const std:: string init_mode="uniform", const int randomseed=1 )
-            : model {model}, measurement_obj {meas}, stepsize {stepsize}, beta {beta}, gamma {gamma}, N_iter {N_iter}, THREADS {threads}, integrator {integrator}, init_mode {init_mode}, randomseed {randomseed}
+        simulation (IPS_model& model, 
+                    measurement& meas, 
+                    const double stepsize, 
+                    const double beta, 
+                    const double gamma, 
+                    const int N_iter, 
+                    const int threads, 
+                    const std:: string integrator, 
+                    const std:: string init_mode, 
+                    const int seed)
+                  : model {model}, 
+                    measurement_obj {meas}, 
+                    stepsize {stepsize}, 
+                    beta {beta}, 
+                    gamma {gamma}, 
+                    N_iter {N_iter}, 
+                    THREADS {threads}, 
+                    integrator {integrator}, 
+                    init_mode {init_mode}, 
+                    seed {seed}
             {
 
                 // Specify force field.
@@ -38,7 +56,7 @@ class simulation {
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
-                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.n_part, coordinate{0,0}));
+                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate{0,0}));
 
             }; 
 
@@ -59,7 +77,7 @@ class simulation {
         std:: vector <std:: vector <coordinate>> forces_for_all_tasks;
         const std:: string integrator;  
         const std:: string init_mode;
-        const int randomseed;
+        const int seed;
         void (simulation::* integrator_step)();
         void compute_force_par();
         void A_step(const double h);
@@ -82,9 +100,9 @@ inline void simulation:: set_initial_position(){
     // Square lattice initialization.
 
     // Obtain number of particles per box dimension (for even spacing).
-    int Nx = static_cast<int>(floor(sqrt(model.n_part)));
-    while (model.n_part%Nx != 0) Nx += 1;
-    int Ny = model.n_part/Nx;
+    int Nx = static_cast<int>(floor(sqrt(model.N_particles)));
+    while (model.N_particles%Nx != 0) Nx += 1;
+    int Ny = model.N_particles/Nx;
     
     const double L_mod = model.L-0.00001; // To ensure no particle is placed on the edge.
 
@@ -112,7 +130,7 @@ inline void simulation:: set_initial_position(const int seed){
 
     twister.seed(seed);
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
-    for (int i=0; i<model.n_part; ++i){
+    for (int i=0; i<model.N_particles; ++i){
         model.init_positions[i].x = box_uniform(twister);
         model.init_positions[i].y = box_uniform(twister);
     }
@@ -130,8 +148,8 @@ inline void simulation:: compute_force_par()
         std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{0,0});
 
     #pragma omp parallel for schedule(dynamic) num_threads(THREADS)
-    for (int i = 0; i < model.n_part; ++i) {
-        for (int j = i + 1; j < model.n_part; ++j) {
+    for (int i = 0; i < model.N_particles; ++i) {
+        for (int j = i + 1; j < model.N_particles; ++j) {
 
         // coordinate force_ij = (model.*get_force_ij)(model.positions[i], model.positions[j]);
         coordinate force_ij = (model.*(model.get_force_ij))(model.positions[i], model.positions[j]);  // This member function pointer syntax is terrible!
@@ -149,7 +167,7 @@ inline void simulation:: compute_force_par()
     // Sum all of the task-specific forces into the output parameter.
     std:: fill(model.forces.begin(), model.forces.end(), coordinate{0, 0});
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
-        for (int i = 0; i < model.n_part; ++i)
+        for (int i = 0; i < model.N_particles; ++i)
         {
         model.forces[i].x += forces_for_specific_task[i].x;
         model.forces[i].y += forces_for_specific_task[i].y;
@@ -160,7 +178,7 @@ inline void simulation:: compute_force_par()
 
 inline void simulation:: A_step(const double h){
 
-    for (int i=0; i<model.n_part; ++i){
+    for (int i=0; i<model.N_particles; ++i){
         model.positions[i].x += h*model.velocities[i].x;
         model.positions[i].y += h*model.velocities[i].y;
     }
@@ -171,7 +189,7 @@ inline void simulation:: A_step(const double h){
 
 inline void simulation:: B_step(const double h){
     
-    for (int i=0; i<model.n_part; ++i){
+    for (int i=0; i<model.N_particles; ++i){
         model.velocities[i].x += h*model.forces[i].x;
         model.velocities[i].y += h*model.forces[i].y;
     }
@@ -186,7 +204,7 @@ inline void simulation:: O_step(const double h){
     const double a = exp(-gamma*h);
     const double pref = sqrt(1/beta *(1-a*a));
 
-    for (int i=0; i<model.n_part; ++i){
+    for (int i=0; i<model.N_particles; ++i){
         model.velocities[i].x = a*model.velocities[i].x + pref*normal(twister); 
         model.velocities[i].y = a*model.velocities[i].y + pref*normal(twister); 
     }
@@ -217,7 +235,7 @@ inline void simulation:: U_step(const double h){
     coordinate Z1, Z2;
     coordinate xi1, xi2; 
 
-    for (int i=0; i<model.n_part; ++i){
+    for (int i=0; i<model.N_particles; ++i){
 
         xi1.x = normal(twister);
         xi1.y = normal(twister);
@@ -248,7 +266,7 @@ inline void simulation:: apply_periodic_boundaries(){
     const double L {model.L};
     const double two_L {2*L};
 
-    for (int i=0; i<model.n_part; ++i){
+    for (int i=0; i<model.N_particles; ++i){
         x = model.positions[i].x;
         model.positions[i].x = x>L ? x-two_L : (x<-L ? x + two_L : x);
         y = model.positions[i].y;
@@ -299,7 +317,7 @@ inline void simulation:: run(){
     measurement_obj.stepsize = stepsize;
 
     // Set positions.
-    if (init_mode == "uniform") set_initial_position(randomseed);
+    if (init_mode == "uniform") set_initial_position(seed);
     else if (init_mode == "grid") set_initial_position();
 
     const std:: vector <coordinate> init_positions {model.positions};  // Needed for MSD computation.
@@ -307,7 +325,7 @@ inline void simulation:: run(){
     std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
 
     // Seed RNG for simulation.
-    twister.seed(randomseed);
+    twister.seed(seed);
 
     // Set forces.
     compute_force_par();
@@ -320,7 +338,7 @@ inline void simulation:: run(){
     auto t1 = std:: chrono:: high_resolution_clock:: now();
     for (int i=0; i<=N_iter; ++i){
         
-        if (i % measurement_obj.n_meas == 0) measurement_obj.take_measurement(model);
+        if (i % measurement_obj.N_meas == 0) measurement_obj.take_measurement(model);
 
         (this->*integrator_step)();
 

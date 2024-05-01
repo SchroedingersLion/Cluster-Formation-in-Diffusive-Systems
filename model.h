@@ -21,23 +21,25 @@ class IPS_model {
 
     public: 
 
-        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
-        const double L;                 // Box volume = [-L,L]^2.
-        const int n_part;               // No. of particles.
+        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES
+        const double L;                // Box volume = [-L,L]^2.
+        const int N_particles;               // No. of particles.
         std:: vector <coordinate> positions, init_positions, velocities, forces;
         coordinate (IPS_model::* get_force_ij) (const coordinate, const coordinate); // Points to interaction function between two particles.
 
         // CONSTRUCTOR.
-        IPS_model(const int n_part=1000, const double L=5, 
-                  const std:: string& forcefield = "gauss")
-            : n_part {n_part}, L {L}, kappa {1./n_part}, forcefield {forcefield} 
+        IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield)
+                : N_particles {N_particles}, 
+                  L {boxlength/2}, 
+                  kappa {1./N_particles}, 
+                  forcefield {forcefield} 
             {
 
                 // Resize vectors.
-                positions.resize(n_part);
-                init_positions.resize(n_part);
-                velocities.resize(n_part);
-                forces.resize(n_part);
+                positions.resize(N_particles);
+                init_positions.resize(N_particles);
+                velocities.resize(N_particles);
+                forces.resize(N_particles);
 
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
@@ -56,7 +58,7 @@ class IPS_model {
         
         // Gaussian potential.
         const double sigma_2_gauss {1}; // sigma^2.
-        // const double T_Tcrit_gauss = (1/beta) / (2*M_PI * n_part/(4*L*L) * sigma_2_gauss * 0.5*kappa);
+        // const double T_Tcrit_gauss = (1/beta) / (2*M_PI * N_particles/(4*L*L) * sigma_2_gauss * 0.5*kappa);
         coordinate get_force_ij_gauss(const coordinate position_i, const coordinate position_j);            // Gauss interaction function.
 
         // Morse potential.

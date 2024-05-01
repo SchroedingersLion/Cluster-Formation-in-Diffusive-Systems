@@ -27,13 +27,13 @@ class measurement {
     public:
 
         // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
-        const int n_meas;  // Number of iterations after which measure. (having this in here is ugly actually).
+        const int N_meas;  // Number of iterations after which measure. (having this in here is ugly actually).
         float stepsize;            /* Stepsize used in the simulation (set by the simulation)
                                       This is needed to obtain the correct simulation times at which measurements are taken. */
 
         // CONSTRUCTOR.
-        measurement(const int n_meas, const int N_iter)
-            : n_meas {n_meas}, N_iter {N_iter}
+        measurement(const int N_meas, const int Niter)
+            : N_meas {N_meas}, Niter {Niter}
             {
                 
                 /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
@@ -50,7 +50,7 @@ class measurement {
                 col_names[2] = "Tkin";
                 /*################################################################################*/
                 
-                int no_of_measurements {N_iter / n_meas + 1};
+                int no_of_measurements {Niter / N_meas + 1};
                 
                 for (auto& observable_vector : results) observable_vector.resize(no_of_measurements);
                 times.resize(no_of_measurements);
@@ -91,7 +91,7 @@ class measurement {
 
         std:: vector <std:: string> col_names; // Names of the columns in the output file (names of the observables).
 
-        const int N_iter;  // Number of iterations in the simulation.(having this in here is ugly actually).
+        const int Niter;  // Number of iterations in the simulation.(having this in here is ugly actually).
         
         void add_to_results();
 
@@ -131,10 +131,10 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
         zeta.y += sin(theta.y);
 
     }
-    xi.x *= pref2/model.n_part;
-    xi.y *= pref2/model.n_part;
-    zeta.x *= pref2/model.n_part;
-    zeta.y *= pref2/model.n_part;
+    xi.x *= pref2/model.N_particles;
+    xi.y *= pref2/model.N_particles;
+    zeta.x *= pref2/model.N_particles;
+    zeta.y *= pref2/model.N_particles;
 
     center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
     center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
@@ -155,7 +155,7 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
 
     }
 
-    return dist/model.n_part;
+    return dist/model.N_particles;
 
 }    
 
@@ -202,7 +202,7 @@ inline float measurement:: get_Tkin(const IPS_model& model){
 inline void measurement:: add_to_results(){
 
     for (int i=0; i<no_observables; ++i) results[i][k] = observables[i];
-    times[k] = k*n_meas*stepsize;
+    times[k] = k*N_meas*stepsize;
     ++k;
 
 }

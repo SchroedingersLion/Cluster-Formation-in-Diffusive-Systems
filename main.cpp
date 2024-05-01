@@ -2,45 +2,33 @@
 
 int main(int argc, char* argv[]){
 
-
-    // Parse command line
-    auto [result, options] = parseCommandLine(argc, argv);
-
-    // Check if help option is provided
-    if (result.count("help")) {
-        std::cout << options.help() << std::endl;
-        return 0;
-    }
-
-    // Process parsed values
-    ParsedValues values = processParsedValues(result);
+    // Process command line arguments.
+    auto [parse_result, options] = parseCommandLine(argc, argv); // Parse command line.
+    if (parse_result.count("help")) {std:: cout << options.help() << std:: endl; return 0;}
+    ParsedValues vals = processParsedValues(parse_result);
 
 
+    // Set up simulation.
+    IPS_model sys(vals.N_particles, vals.boxlength, vals.forcefield);
 
+    measurement meas(vals.N_meas, vals.N_iter);
 
-    // const double gamma = atof(argv[1]);
-    // const double h = atof(argv[2]);
-    // const int N_iter = atoi(argv[3]);
-    // const int seed = atoi(argv[4]);
+    simulation simu(sys, 
+                    meas, 
+                    vals.stepsize, 
+                    vals.beta, 
+                    vals.gamma, 
+                    vals.N_iter, 
+                    vals.threads, 
+                    vals.integrator, 
+                    vals.init_mode, 
+                    vals.seed);
 
-    // int n_meas = 1;
-
-    // double beta=300; 
-
-    // std:: string outputname = "test_output.csv";
-
-    // std::string force = "morse";
-    
-    IPS_model sys(1000, 5, force);
-
-    measurement meas(n_meas, N_iter);
-
-    simulation simu(sys, meas, h, beta, gamma, N_iter);
-
+    // Run simulation.
     simu.run();
 
-    meas.print_to_csv(outputname);
-
+    // Print results.
+    meas.print_to_csv(vals.output_name);
 
 
     return 0;
