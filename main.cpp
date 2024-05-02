@@ -7,7 +7,6 @@ int main(int argc, char* argv[]){
     if (parse_result.count("help")) {std:: cout << options.help() << std:: endl; return 0;}
     ParsedValues vals = processParsedValues(parse_result);
 
-
     // Set up simulation.
     IPS_model sys(vals.N_particles, vals.boxlength, vals.forcefield);
 

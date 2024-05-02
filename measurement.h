@@ -238,7 +238,7 @@ inline void measurement:: print_results(const std:: string outputname){
     // Write trajectory if needed.
     if (trajectory){
         std:: cout << "Writing trajectory...\n";
-        std:: ofstream traj_file {outputname};
+        std:: ofstream traj_file {outputname+"_trajectory"};
         
         // Write header with specified column names.
         traj_file << "Time " << "x " << "y\n";

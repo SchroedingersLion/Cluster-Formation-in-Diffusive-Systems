@@ -34,15 +34,15 @@ std::string description = R"(
 
     // Define command line options.
     options.add_options()
-        ("N_particles",  "Number of particles.",                                        cxxopts:: value <int>()->default_value(_N_particles_default))
+        ("N_particles", "Number of particles.",                                         cxxopts:: value <int>()->default_value(_N_particles_default))
         ("boxlength",   "Length of edge of square simulation box.",                     cxxopts:: value <double>()->default_value(_boxlength_default))
         ("forcefield",  "Forcefield between two particles. Either 'gauss' or 'morse'.", cxxopts:: value <std:: string>()->default_value(_forcefield_default))
         ("init_mode",   "Initial positions of the system. Either 'uniform' or 'grid'.", cxxopts:: value <std:: string>()->default_value(_init_mode_default))
         ("beta",        "Inverse temperature parameter in Langevin dynamics.",          cxxopts:: value <double>()->default_value(_beta_default))
         ("gamma",       "Friction parameter in Langevin dynamics.",                     cxxopts:: value <double>()->default_value(_gamma_default))
-        ("N_iter",       "Number of simulation steps.",                                 cxxopts:: value <int>()->default_value(_N_iter_default))
+        ("N_iter",      "Number of simulation steps.",                                  cxxopts:: value <int>()->default_value(_N_iter_default))
         ("stepsize",    "Simulation stepsize.",                                         cxxopts:: value <double>()->default_value(_stepsize_default))
-        ("N_meas",       "Take a measurement any 'N_meas' iterations.",                 cxxopts:: value <int>()->default_value(_N_meas_default))
+        ("N_meas",      "Take a measurement any 'N_meas' iterations.",                  cxxopts:: value <int>()->default_value(_N_meas_default))
         ("integrator",  "Integrator to be used. Either 'BAOAB' or 'UBU'.",              cxxopts:: value <std:: string>()->default_value(_integrator_default))
         ("threads",     "Number of threads used in the force evaluation.",              cxxopts:: value <int>()->default_value(_threads_default))
         ("seed",        "Randomseed.",                                                  cxxopts:: value <int>()->default_value(_seed_default))
@@ -91,7 +91,7 @@ ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
     values.threads     = result.count("threads")     ?   result["threads"].as<int>()            : std:: stoi(_threads_default);
     values.seed        = result.count("seed")        ?   result["seed"].as<int>()               : std:: stoi(_seed_default);
     values.output_name = result.count("output_name") ?   result["output_name"].as<std::string>(): _output_name_default;
-    values.trajectory  = result.count("trjaectory");
+    values.trajectory  = result.count("trajectory");
 
     return values;
 }

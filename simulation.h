@@ -50,7 +50,7 @@ class simulation {
                     meas {measurement (model, N_meas, N_iter, stepsize, trajectory)}
             {
 
-                std:: cout << "\nCreate simulation with integrator " << integrator << ",\n"
+                std:: cout << "\nCreating simulation with integrator " << integrator << ",\n"
                            << "stepsize " << stepsize << ",\n"
                            << "gamma " << gamma << ",\n"
                            << "beta " << beta << ",\n"
