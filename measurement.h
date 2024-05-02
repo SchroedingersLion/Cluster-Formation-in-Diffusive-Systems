@@ -27,8 +27,8 @@ class measurement {
     public:
 
         // CONSTRUCTOR.
-        measurement(const int N_meas, const int N_iter, const double stepsize, const bool trajectory)
-            : N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}, trajectory {trajectory}
+        measurement(const IPS_model& model, int N_meas, const int N_iter, const double stepsize, const bool trajectory)
+            : model {model}, N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}, trajectory {trajectory}
             {
                 
                 /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
@@ -56,15 +56,15 @@ class measurement {
 
 
 
-        void take_measurement(const IPS_model& model){
+        void take_measurement(){
 
             /* ########### COMPUTE CURRENT OBSERVABLE VALUES FROM PARAMETERS ########
                The number of entries in vector "observables" must correspond to member variable "no_observables" set by the user
                in the constructor above. */          
             
-            observables[0] = get_center_of_mass_distance(model);
-            observables[1] = get_msd(model);
-            observables[2] = get_Tkin(model);
+            observables[0] = get_center_of_mass_distance();
+            observables[1] = get_msd();
+            observables[2] = get_Tkin();
             /*########################################################################*/
 
             add_to_results();  // Add new observables to results array and add new time value.
@@ -78,6 +78,7 @@ class measurement {
 
 
     private:
+        const IPS_model& model;                              // Model to take measurements on.
         int no_observables;                            // Number of observables to be taken.
         std:: vector <float> observables;              // Vector of size (no_observables) storing new measurement values.
         std:: vector <std:: vector <float>> results;   // Results array accumulating observable values in time (will be printed to file).
@@ -96,9 +97,9 @@ class measurement {
                                       
         void add_to_results();
 
-        float get_center_of_mass_distance(const IPS_model& model);
-        float get_msd(const IPS_model& model);
-        float get_Tkin(const IPS_model& model);
+        float get_center_of_mass_distance();
+        float get_msd();
+        float get_Tkin();
 
 };
 // ##################### END OF CLASS DEFINITION ##############################################
@@ -109,7 +110,7 @@ class measurement {
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
 
 
-inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
+inline float measurement:: get_center_of_mass_distance(){
 // We use the method of  L. Bai and D. Breen, 
 // ''Calculating Center of Mass in an Unbounded 2D Environment,'' 
 // Journal of Graphics Tools, Vol. 13, No. 4, December 2008, pp. 53-60. 
@@ -162,7 +163,7 @@ inline float measurement:: get_center_of_mass_distance(const IPS_model& model){
 
 
 
-inline float measurement:: get_msd(const IPS_model& model){
+inline float measurement:: get_msd(){
     
     coordinate diff;
     double msd {0}, two_L {2*model.L};
@@ -186,7 +187,7 @@ inline float measurement:: get_msd(const IPS_model& model){
 
 
 
-inline float measurement:: get_Tkin(const IPS_model& model){
+inline float measurement:: get_Tkin(){
 
     double Tkin {0};
 
@@ -243,7 +244,7 @@ inline void measurement:: print_results(const std:: string outputname){
         traj_file << "Time " << "x " << "y\n";
 
         // Write times and positions.
-        int number_particles {trajectory_buffer[0].size()};
+        size_t number_particles {trajectory_buffer[0].size()};
         double time;
         for ( size_t i=0; i<trajectory_buffer.size(); ++i )
         {

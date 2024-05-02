@@ -47,7 +47,7 @@ class simulation {
                     integrator {integrator}, 
                     init_mode {init_mode}, 
                     seed {seed},
-                    meas {measurement (N_meas, N_iter, stepsize, trajectory)}
+                    meas {measurement (model, N_meas, N_iter, stepsize, trajectory)}
             {
 
                 std:: cout << "\nCreate simulation with integrator " << integrator << ",\n"
@@ -350,7 +350,7 @@ inline void simulation:: run(){
     auto t1 = std:: chrono:: high_resolution_clock:: now();
     for (int i=0; i<=N_iter; ++i){
         
-        if (i % N_meas == 0) meas.take_measurement(model);
+        if (i % N_meas == 0) meas.take_measurement();
 
         (this->*integrator_step)();
 
