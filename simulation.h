@@ -322,6 +322,7 @@ inline void simulation:: BAOAB_step(){
 
 inline void simulation:: run(){
 
+    std:: cout << "\nRunning simulation...\n";
     //  std::cout<< "Simulation at T/Tcrit="<<T_Tcrit_gauss<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
