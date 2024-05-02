@@ -57,7 +57,7 @@ class simulation {
                            << "Using " << THREADS << " threads for force calculations. \n"
                            << "Mode of initialization: " << init_mode << ".\n"
                            << "Randomseed " << seed << ".\n"
-                           << "Taking a measurement any " << meas.N_meas << " steps.\n" << std:: endl;
+                           << "Taking a measurement any " << N_meas << " steps.\n" << std:: endl;
 
                 // Specify force field.
                 if (integrator=="BAOAB") integrator_step = &simulation:: BAOAB_step;
