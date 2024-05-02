@@ -23,27 +23,30 @@ class simulation {
 
     public: 
 
+        measurement meas;  // Needs to be public because main calls print function.
+
         // CONSTRUCTOR.
         simulation (IPS_model& model, 
-                    measurement& meas, 
                     const double stepsize, 
                     const double beta, 
                     const double gamma, 
-                    const int N_iter, 
+                    const int N_iter,
+                    const int N_meas, 
                     const int threads, 
                     const std:: string integrator, 
                     const std:: string init_mode, 
                     const int seed)
                   : model {model}, 
-                    measurement_obj {meas}, 
                     stepsize {stepsize}, 
                     beta {beta}, 
                     gamma {gamma}, 
-                    N_iter {N_iter}, 
+                    N_iter {N_iter},
+                    N_meas {N_meas}, 
                     THREADS {threads}, 
                     integrator {integrator}, 
                     init_mode {init_mode}, 
-                    seed {seed}
+                    seed {seed},
+                    meas {measurement (N_meas, N_iter, stepsize)}
             {
 
                 std:: cout << "\nCreate simulation with integrator " << integrator << ",\n"
@@ -78,11 +81,11 @@ class simulation {
         
         std:: mt19937 twister;
         IPS_model& model;
-        measurement& measurement_obj;
         const double stepsize;
         const double beta;
         const double gamma;
         const int N_iter;
+        const int N_meas;
         const int THREADS;
         std:: vector <std:: vector <coordinate>> forces_for_all_tasks;
         const std:: string integrator;  
@@ -162,7 +165,7 @@ inline void simulation:: compute_force_par()
         for (int j = i + 1; j < model.N_particles; ++j) {
 
         // coordinate force_ij = (model.*get_force_ij)(model.positions[i], model.positions[j]);
-        coordinate force_ij = (model.*(model.get_force_ij))(model.positions[i], model.positions[j]);  // This member function pointer syntax is terrible!
+        coordinate force_ij = (model.*(model.get_force_ij))(model.positions[i], model.positions[j]);  // This syntax is disgusting!
         
         std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
         
@@ -323,9 +326,6 @@ inline void simulation:: run(){
 
     // Prepare simulation.
 
-    // Pass stepsize to measurement object (needed to fill times vector).
-    measurement_obj.stepsize = stepsize;
-
     // Set positions.
     if (init_mode == "uniform") set_initial_position(seed);
     else if (init_mode == "grid") set_initial_position();
@@ -348,7 +348,7 @@ inline void simulation:: run(){
     auto t1 = std:: chrono:: high_resolution_clock:: now();
     for (int i=0; i<=N_iter; ++i){
         
-        if (i % measurement_obj.N_meas == 0) measurement_obj.take_measurement(model);
+        if (i % N_meas == 0) meas.take_measurement(model);
 
         (this->*integrator_step)();
 

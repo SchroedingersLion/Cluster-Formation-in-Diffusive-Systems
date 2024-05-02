@@ -11,14 +11,12 @@ int main(int argc, char* argv[]){
     // Set up simulation.
     IPS_model sys(vals.N_particles, vals.boxlength, vals.forcefield);
 
-    measurement meas(vals.N_meas, vals.N_iter);
-
     simulation simu(sys, 
-                    meas, 
                     vals.stepsize, 
                     vals.beta, 
                     vals.gamma, 
-                    vals.N_iter, 
+                    vals.N_iter,
+                    vals.N_meas, 
                     vals.threads, 
                     vals.integrator, 
                     vals.init_mode, 
@@ -28,7 +26,7 @@ int main(int argc, char* argv[]){
     simu.run();
 
     // Print results.
-    meas.print_to_csv(vals.output_name);
+    simu.meas.print_to_csv(vals.output_name);
 
 
     return 0;

@@ -26,14 +26,9 @@ class measurement {
 
     public:
 
-        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
-        const int N_meas;  // Number of iterations after which measure. (having this in here is ugly actually).
-        float stepsize;            /* Stepsize used in the simulation (set by the simulation)
-                                      This is needed to obtain the correct simulation times at which measurements are taken. */
-
         // CONSTRUCTOR.
-        measurement(const int N_meas, const int N_iter)
-            : N_meas {N_meas}, N_iter {N_iter}
+        measurement(const int N_meas, const int N_iter, const double stepsize)
+            : N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}
             {
                 
                 /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
@@ -91,8 +86,10 @@ class measurement {
 
         std:: vector <std:: string> col_names; // Names of the columns in the output file (names of the observables).
 
-        const int N_iter;  // Number of iterations in the simulation.(having this in here is ugly actually).
-        
+        const int N_iter;  // Number of interations in the simulation.
+        const int N_meas;  // Take measurement any N_meas steps.
+        const double stepsize;    // Stepsize used in the simulation        
+                                      
         void add_to_results();
 
         float get_center_of_mass_distance(const IPS_model& model);
