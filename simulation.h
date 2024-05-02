@@ -35,7 +35,8 @@ class simulation {
                     const int threads, 
                     const std:: string integrator, 
                     const std:: string init_mode, 
-                    const int seed)
+                    const int seed,
+                    const bool trajectory)
                   : model {model}, 
                     stepsize {stepsize}, 
                     beta {beta}, 
@@ -46,7 +47,7 @@ class simulation {
                     integrator {integrator}, 
                     init_mode {init_mode}, 
                     seed {seed},
-                    meas {measurement (N_meas, N_iter, stepsize)}
+                    meas {measurement (N_meas, N_iter, stepsize, trajectory)}
             {
 
                 std:: cout << "\nCreate simulation with integrator " << integrator << ",\n"

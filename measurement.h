@@ -27,8 +27,8 @@ class measurement {
     public:
 
         // CONSTRUCTOR.
-        measurement(const int N_meas, const int N_iter, const double stepsize)
-            : N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}
+        measurement(const int N_meas, const int N_iter, const double stepsize, const bool trajectory)
+            : N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}, trajectory {trajectory}
             {
                 
                 /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
@@ -49,6 +49,7 @@ class measurement {
                 
                 for (auto& observable_vector : results) observable_vector.resize(no_of_measurements);
                 times.resize(no_of_measurements);
+                if (trajectory) trajectory_buffer.resize(no_of_measurements);
 
             
             };
@@ -73,7 +74,7 @@ class measurement {
         };
 
 
-        void print_to_csv(const std:: string outputname);    // Prints out results array.
+        void print_results(const std:: string outputname);    // Prints results array to .csv.
 
 
     private:
@@ -81,6 +82,9 @@ class measurement {
         std:: vector <float> observables;              // Vector of size (no_observables) storing new measurement values.
         std:: vector <std:: vector <float>> results;   // Results array accumulating observable values in time (will be printed to file).
         int k {0};                                     // Current index of results array to store measurements in.
+        
+        bool trajectory;    // If true, trajectory will stored and printed to file.
+        std:: vector <std:: vector <coordinate>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
         
         std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
@@ -200,17 +204,16 @@ inline void measurement:: add_to_results(){
 
     for (int i=0; i<no_observables; ++i) results[i][k] = observables[i];
     times[k] = k*N_meas*stepsize;
+    if (trajectory) trajectory_buffer[k] = model.positions;
     ++k;
 
 }
 
 
 
-inline void measurement:: print_to_csv(const std:: string outputname){
+inline void measurement:: print_results(const std:: string outputname){
 
-    // Overloaded version without printing positions.
-    std:: cout << "Writing to file...\n";
-
+    std:: cout << "Writing results to file..." << std:: endl;
 
     std:: ofstream file {outputname};
     
@@ -231,7 +234,32 @@ inline void measurement:: print_to_csv(const std:: string outputname){
 
     file.close();
 
+    // Write trajectory if needed.
+    if (trajectory){
+        std:: cout << "Writing trajectory...\n";
+        std:: ofstream traj_file {outputname};
+        
+        // Write header with specified column names.
+        traj_file << "Time " << "x " << "y\n";
+
+        // Write times and positions.
+        int number_particles {trajectory_buffer[0].size()};
+        double time;
+        for ( size_t i=0; i<trajectory_buffer.size(); ++i )
+        {
+            time =  i*N_meas*stepsize;
+            for ( size_t j=0; j<number_particles; ++j )
+            {
+                traj_file << time << " " << trajectory_buffer[i][j].x << " " << trajectory_buffer[i][j].y <<  "\n";  
+            }
+        }
+
+        traj_file.close();
+    }
+
+
 }
+
 
 
 // ########### END OF MEMBER DEFINITIONS ##############################################

@@ -47,6 +47,7 @@ std::string description = R"(
         ("threads",     "Number of threads used in the force evaluation.",              cxxopts:: value <int>()->default_value(_threads_default))
         ("seed",        "Randomseed.",                                                  cxxopts:: value <int>()->default_value(_seed_default))
         ("output_name", "Name of the printed file holding the results.",                cxxopts:: value <std:: string>()->default_value(_output_name_default))               
+        ("trajectory",  "If flag is set, trajetory will be printed to file.",           cxxopts:: value<bool>())           
         ("help",        "Print help");
 
     // Parse command line.
@@ -68,6 +69,7 @@ struct ParsedValues{
     int threads;
     int seed;
     std:: string output_name;
+    bool trajectory;
 };
 
 
@@ -89,6 +91,7 @@ ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
     values.threads     = result.count("threads")     ?   result["threads"].as<int>()            : std:: stoi(_threads_default);
     values.seed        = result.count("seed")        ?   result["seed"].as<int>()               : std:: stoi(_seed_default);
     values.output_name = result.count("output_name") ?   result["output_name"].as<std::string>(): _output_name_default;
+    values.trajectory  = result.count("trjaectory");
 
     return values;
 }

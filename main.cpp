@@ -20,13 +20,14 @@ int main(int argc, char* argv[]){
                     vals.threads, 
                     vals.integrator, 
                     vals.init_mode, 
-                    vals.seed);
+                    vals.seed,
+                    vals.trajectory);
 
     // Run simulation.
     simu.run();
 
     // Print results.
-    simu.meas.print_to_csv(vals.output_name);
+    simu.meas.print_results(vals.output_name);
 
 
     return 0;
