@@ -8,9 +8,11 @@ It holds the C++ source code that can be inspected and easily modified, an execu
 ## Introduction
 **brief summary of the system**
 
-## Quickstart
-To create an executable on your platform, download the files in the src folder and compile the main.cpp file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o IPS.out main.cpp`. 
-   
+## Build From Source
+To create an executable on your platform, download the files in the src folder and compile the main.cpp file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o IPS.out main.cpp`.  
+If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store in your system's include folder (on Linux, this is typically /usr/include). 
+
+## Quickstart   
 To run a simulation, run the executable with `./IPS.out`. This will simulate a single trajectory of an IPS with default parameters. It will create a .csv output file holding time series data of the mean
 distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin).  
 The properties of the simulation can be controlled via various flags (eg. stepsize, number of particles, number of iterations, which integrator to use etc.). Run `./IPS.out --help` to view the possible options.
