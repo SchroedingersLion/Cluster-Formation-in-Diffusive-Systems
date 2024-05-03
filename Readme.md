@@ -1,4 +1,4 @@
-# N-Particle System With Pairwise Interaction on the 2D Torus.
+# N-Particle System with Pairwise Interaction on the 2D Torus.
 
 ## Summary
 This repository holds the simulation of the interacting particle system (IPS) for the work
@@ -16,7 +16,7 @@ Run `./IPS.exe --help` to view the possible options.
   
 To plot the results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info.
   
-In order to create an animation of a trajectory, `./IPS.exe` needs to be executed with the `--trajectory` flag which will prompt the program to print out trajectory data to a second file.
+In order to create an animation of a trajectory, `./IPS.exe` needs to be executed with the `--trajectory` flag which will prompt the program to print out trajectory data to a second file.  
 This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are various options available (view them via the `--help` flag).
   
 A snapshot of an animation can be seen below.
