@@ -11,13 +11,6 @@
 
 #include "model.h"
 
-/*  This is the measurement class that is used by the simulation to take measurements of user-specified quantities. 
-    In order to modify what observables are collected, the user has to do 2 things:
-    a) in the constructor, they have to specify the numbers of observables to be taken by
-       adjusting the value of the variable "no_observables". 
-    b) in the function "take_measurement" the user has to adjust the formulas used to compute an observable from 
-       the parameters. 
-*/
 
 
 // ###################### MEASUREMENT CLASS DEFINITION ##################################################
