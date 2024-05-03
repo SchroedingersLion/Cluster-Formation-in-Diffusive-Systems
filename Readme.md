@@ -11,8 +11,7 @@ It holds the C++ source code that can be inspected and easily modified, an execu
 ## Quickstart
 To run a simulation, run the executable with `./IPS.exe`. This will simulate a single trajectory of an IPS with default parameters. It will create a .csv output file holding time series data of the mean
 distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin).  
-The properties of the simulation can be controlled via various flags (eg. stepsize, number of particles, number of iterations, which integrator to use etc.).  
-Run `./IPS.exe --help` to view the possible options.
+The properties of the simulation can be controlled via various flags (eg. stepsize, number of particles, number of iterations, which integrator to use etc.). Run `./IPS.exe --help` to view the possible options.
   
 To plot the results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info.
   
