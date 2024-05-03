@@ -20,6 +20,6 @@ In order to create an animation of a trajectory, `./IPS.exe` needs to be execute
 This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are various options available (view them via the `--help` flag).
   
 A snapshot of an animation can be seen below.
-
+.![snapshot_animation_github](https://github.com/SchroedingersLion/Interacting_Particle_Systems/assets/70909827/b1cfc6b6-a946-442a-bb4f-a3bdbe877f05)
 ## Add additional forcefields or observables
-**explain how users can add new force fields or change the observables that are collected**.
+**explain how users can add new force fields or change the observables that are collected**
