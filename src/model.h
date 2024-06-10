@@ -66,7 +66,7 @@ class IPS_model {
 
         // Morse potential.
         const double a_morse {1};
-        const double r_morse {0.25};
+        const double r_morse {0.65}; // previous: 0.25
         const double D_morse {4};
         coordinate get_force_ij_morse(const coordinate position_i, const coordinate position_j);            // Morse interaction function.
         //##################################################################################################################################
