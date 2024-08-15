@@ -18,7 +18,6 @@ plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
 plt.rc('ytick', labelsize=22) 
 
-
 ### Function to update animation.
 def update(frame, x_coords, y_coords, times, scatterplot, time_text):
     
@@ -43,7 +42,7 @@ parser = argparse.ArgumentParser(description='Reads a trajectory file obtained b
 parser.add_argument('file', type=str, help='Trajectory data file to animate.')
 parser.add_argument('--interval', type=int, default=10, help='Time in ms between two frames in animation.')
 parser.add_argument('--title', type=str, default="", help='Title of the animation.')
-parser.add_argument('--save', type=str, default="animation.gif", help='File name for saving the animation.')
+parser.add_argument('--save', type=str, default="", help='File name for saving the animation. Default: File not saved.')
 parser.add_argument('--fps', type=int, default=3, help='Frames per second in the saved animation (overrides "interval").')
 
 args = parser.parse_args()
@@ -63,7 +62,7 @@ xlim = [np.min(arr[:,1]), np.max(arr[:,1])]
 ylim = [np.min(arr[:,2]), np.max(arr[:,2])]
 
 # Create animation window.
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(10, 10))
 ax.set(xlim=xlim, ylim=ylim, xlabel='x', ylabel='y')
 ax.set_title(title)
 
@@ -89,8 +88,11 @@ time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
 # Plot animation.
 ani = animation.FuncAnimation(fig=fig, func=update, frames=N_frames, fargs=(x_coords, y_coords, times, scat, time_text), interval=interval)
+# Save animation.
+if save_file:
+    print("Saving animation...")
+    ani.save(save_file, writer='ffmpeg', fps=fps)
+
 plt.show()
 
-# Save animation.
-if save_file: 
-    ani.save(save_file, writer='pillow', fps=fps)
+
