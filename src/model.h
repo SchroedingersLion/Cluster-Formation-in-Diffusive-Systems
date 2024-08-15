@@ -100,7 +100,7 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, co
     
     const double dist_sq {dist.x*dist.x + dist.y*dist.y};
 
-    const double pref {-kappa/(2*sigma_2_gauss)};
+    const double pref {-kappa/(sigma_2_gauss)};
     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
