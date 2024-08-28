@@ -60,7 +60,7 @@ class simulation {
                            << "Randomseed " << seed << ".\n"
                            << "Taking a measurement any " << N_meas << " steps.\n" << std:: endl;
 
-                // Specify force field.
+                // Specify integrator.
                 if (integrator=="BAOAB") integrator_step = &simulation:: BAOAB_step;
                 else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
                 else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'BAOAB' and 'UBU'." );
