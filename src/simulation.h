@@ -103,6 +103,7 @@ class simulation {
         void UBU_step();
         void set_initial_position();
         void set_initial_position(const int seed);
+        void set_initial_velocities();
 
 
 };
@@ -150,6 +151,21 @@ inline void simulation:: set_initial_position(const int seed){
     }
 
     model.positions = model.init_positions;
+
+}
+
+
+
+inline void simulation:: set_initial_velocities(){
+    // Gaussian initialization.
+
+    twister.seed(seed);
+    std:: normal_distribution<> normal{0, sqrt(1/beta)};
+    
+    for (int i=0; i<model.N_particles; ++i){
+        model.velocities[i].x = normal(twister);
+        model.velocities[i].y = normal(twister);
+    }
 
 }
 
@@ -334,7 +350,8 @@ inline void simulation:: run(){
 
     const std:: vector <coordinate> init_positions {model.positions};  // Needed for MSD computation.
 
-    std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
+    // std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
+    set_initial_velocities();
 
     // Seed RNG for simulation.
     twister.seed(seed);
