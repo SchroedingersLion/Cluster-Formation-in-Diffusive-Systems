@@ -121,32 +121,22 @@ inline float measurement:: get_center_of_mass_distance(){
         xi.x += cos(theta.x);
         zeta.x += sin(theta.x);
 
-        theta.y = pref*pos.y;
-        xi.y += cos(theta.y);
-        zeta.y += sin(theta.y);
-
     }
     xi.x *= pref2/model.N_particles;
-    xi.y *= pref2/model.N_particles;
     zeta.x *= pref2/model.N_particles;
-    zeta.y *= pref2/model.N_particles;
 
     center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
-    center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
 
 
     // Compute distance to COM.
     float dist {0}, dist_x {0}, dist_y{0};
     for (const auto pos : model.positions){
         dist_x = pos.x - center_of_mass.x;
-        dist_y = pos.y - center_of_mass.y;
 
         if (dist_x > model.L)       dist_x -= two_L;  // periodic boundaries.
         else if (dist_x < -model.L) dist_x += two_L;
-        if (dist_y > model.L)       dist_y -= two_L;
-        else if (dist_y < -model.L) dist_y += two_L;
         
-        dist += sqrt(dist_x*dist_x + dist_y*dist_y);
+        dist += sqrt(dist_x*dist_x);
 
     }
 
@@ -164,14 +154,12 @@ inline float measurement:: get_msd(){
     for(int i=0; i<model.positions.size(); ++i){
         
         diff.x = model.positions[i].x - model.init_positions[i].x;
-        diff.y = model.positions[i].y - model.init_positions[i].y;
 
         if (diff.x > model.L)         diff.x -= two_L;
         else if (diff.x < -model.L)   diff.x += two_L;
-        if (diff.y > model.L)         diff.y -= two_L;
-        else if (diff.y < -model.L)   diff.y += two_L;
 
-        msd += diff.x*diff.x + diff.y*diff.y;
+
+        msd += diff.x*diff.x ;
 
     }
 
@@ -185,10 +173,10 @@ inline float measurement:: get_Tkin(){
     double Tkin {0};
 
     for(auto vel : model.velocities){
-        Tkin += vel.x*vel.x + vel.y*vel.y;
+        Tkin += vel.x*vel.x;
     }
 
-    return Tkin/(2*model.velocities.size());
+    return Tkin/model.velocities.size();
 
 }
 
@@ -234,7 +222,7 @@ inline void measurement:: print_results(const std:: string outputname){
         std:: ofstream traj_file {outputname+"_trajectory"};
         
         // Write header with specified column names.
-        traj_file << "Time " << "x " << "y\n";
+        traj_file << "Time " << "x\n";;
 
         // Write times and positions.
         size_t number_particles {trajectory_buffer[0].size()};
@@ -244,7 +232,7 @@ inline void measurement:: print_results(const std:: string outputname){
             time =  i*N_meas*stepsize;
             for ( size_t j=0; j<number_particles; ++j )
             {
-                traj_file << time << " " << trajectory_buffer[i][j].x << " " << trajectory_buffer[i][j].y <<  "\n";  
+                traj_file << time << " " << trajectory_buffer[i][j].x <<  "\n";  
             }
         }
 
