@@ -11,7 +11,6 @@
 
 struct coordinate{    // Used to denote positions, velocities and forces.
     double x{0};
-    double y{0};
 };
 
 
@@ -46,8 +45,8 @@ class IPS_model {
 
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
-                else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
-                else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss' and 'morse'." );
+                // else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
+                else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed is 'gauss'." );
 
             }
 
@@ -81,12 +80,10 @@ inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, cons
     const double two_L {2*L};
 
     double dx {position_i.x - position_j.x};
-    double dy {position_i.y - position_j.y};
 
     dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
-    dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
 
-    coordinate distances {dx, dy};
+    coordinate distances {dx};
 
     return distances;
 
@@ -96,14 +93,14 @@ inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, cons
 // Gaussian potential.
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
 
-    const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
+    const coordinate dist {get_distances_ij(position_i, position_j)}; 
     
-    const double dist_sq {dist.x*dist.x + dist.y*dist.y};
+    const double dist_sq {dist.x*dist.x};
 
     const double pref {-kappa/(sigma_2_gauss)};
     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
-    coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
+    coordinate force_ij {expo_term*dist.x};
 
     return force_ij;
 
