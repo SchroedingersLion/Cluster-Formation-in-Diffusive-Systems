@@ -16,7 +16,7 @@ plt.rc('lines', linewidth=4)
 plt.rcParams['axes.titlepad'] = 26
 plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
-plt.rc('ytick', labelsize=22) 
+#plt.rc('ytick', labelsize=22) 
 
 ### Function to update animation.
 def update(frame, x_coords, y_coords, times, scatterplot, time_text):
