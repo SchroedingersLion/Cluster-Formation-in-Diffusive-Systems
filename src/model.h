@@ -112,20 +112,20 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, co
 
 
 // Morse potential.
-inline coordinate IPS_model:: get_force_ij_morse(const coordinate position_i, const coordinate position_j){
+// inline coordinate IPS_model:: get_force_ij_morse(const coordinate position_i, const coordinate position_j){
 
-    const coordinate dist {get_distances_ij(position_i, position_j)};  // Gets (dx, dy) tupel.
+//     const coordinate dist {get_distances_ij(position_i, position_j)};  // Gets (dx, dy) tupel.
     
-    const double r {sqrt(dist.x*dist.x + dist.y*dist.y)};
+//     const double r {sqrt(dist.x*dist.x + dist.y*dist.y)};
 
-    const double expo {exp(-a_morse * (r-r_morse))}; 
-    const double pref {kappa * a_morse * D_morse * (expo*expo-expo) / r};
+//     const double expo {exp(-a_morse * (r-r_morse))}; 
+//     const double pref {kappa * a_morse * D_morse * (expo*expo-expo) / r};
 
-    coordinate force_ij {pref*dist.x, pref*dist.y};
+//     coordinate force_ij {pref*dist.x, pref*dist.y};
 
-    return force_ij;
+//     return force_ij;
 
-}
+// }
 
 // ########### END OF MEMBER DEFINITIONS ##############################################
 
