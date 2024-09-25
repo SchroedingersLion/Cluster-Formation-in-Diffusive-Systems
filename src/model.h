@@ -59,7 +59,7 @@ class IPS_model {
         coordinate get_distances_ij(const coordinate position_i, const coordinate position_j);
         
         // Gaussian potential.
-        const double sigma_2_gauss {0.1}; // sigma^2.
+        const double sigma_2_gauss {0.7}; // sigma^2.
         // const double T_Tcrit_gauss = (1/beta) / (2*M_PI * N_particles/(4*L*L) * sigma_2_gauss * 0.5*kappa);
         coordinate get_force_ij_gauss(const coordinate position_i, const coordinate position_j);            // Gauss interaction function.
 
