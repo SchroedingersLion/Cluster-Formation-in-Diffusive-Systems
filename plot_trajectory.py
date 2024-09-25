@@ -19,15 +19,14 @@ plt.rc('xtick', labelsize=22)
 #plt.rc('ytick', labelsize=22) 
 
 ### Function to update animation.
-def update(frame, x_coords, y_coords, times, scatterplot, time_text):
+def update(frame, x_coords, times, scatterplot, time_text):
     
     # for each frame, update the data stored on each artist.
     x = x_coords[:frame]
-    y = y_coords[:frame]
 
     for i in range(0,len(x)):
         xdata = x[i]
-        ydata = y[i]
+        ydata = np.ones(xdata.shape)
         data = np.stack([xdata, ydata]).T
         scatterplot.set_offsets(data)
 
@@ -59,11 +58,10 @@ arr = np.loadtxt(filename, delimiter=" ", skiprows=1)
 
 # Determine boxsize from coordinates.
 xlim = [np.min(arr[:,1]), np.max(arr[:,1])]
-ylim = [np.min(arr[:,2]), np.max(arr[:,2])]
 
 # Create animation window.
 fig, ax = plt.subplots(figsize=(10, 10))
-ax.set(xlim=xlim, ylim=ylim, xlabel='x', ylabel='y')
+ax.set(xlim=xlim, xlabel='x', ylabel='y')
 ax.set_title(title)
 
 # Compute number of particles (given by the first row where the time is no longer 0).
@@ -71,23 +69,22 @@ N_part = np.where(arr[:,0]!=0)[0][0]
 
 # Create array of frames.
 N_frames = len(arr)//N_part                      # Number of frames.
-frames = arr.reshape(N_frames, N_part, 3)       
+frames = arr.reshape(N_frames, N_part, 2)       
 
 # Extract coordinates to feed into animation function.
 x_coords = np.zeros((N_frames, N_part))
-y_coords = np.zeros((N_frames, N_part))
+
 times = np.zeros((N_frames))
 for i in range(0, N_frames):
     x_coords[i,:] = arr[i*N_part : (i+1)*N_part, 1]
-    y_coords[i,:] = arr[i*N_part : (i+1)*N_part, 2]
     times[i] = arr[i*N_part, 0]
 
 # Create scatter plot for animation function.
-scat = ax.scatter(x_coords[0], y_coords[0], c="b", s=5,)
+scat = ax.scatter(x_coords[0], np.ones(x_coords[0].shape), c="b", s=5,)
 time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
 # Plot animation.
-ani = animation.FuncAnimation(fig=fig, func=update, frames=N_frames, fargs=(x_coords, y_coords, times, scat, time_text), interval=interval)
+ani = animation.FuncAnimation(fig=fig, func=update, frames=N_frames, fargs=(x_coords, times, scat, time_text), interval=interval)
 # Save animation.
 if save_file:
     print("Saving animation...")
