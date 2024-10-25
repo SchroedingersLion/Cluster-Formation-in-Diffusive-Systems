@@ -54,6 +54,7 @@ save_file = args.save
 fps = args.fps
 
 
+
 # Load trajectory data.
 arr = np.loadtxt(filename, delimiter=" ", skiprows=1) 
 

@@ -60,14 +60,9 @@ class IPS_model {
         coordinate get_distances_ij(const coordinate position_i, const coordinate position_j);
         
         // Gaussian potential.
-        const double sigma_2_gauss {1}; // sigma^2.
-        // const double T_Tcrit_gauss = (1/beta) / (2*M_PI * N_particles/(4*L*L) * sigma_2_gauss * 0.5*kappa);
         coordinate get_force_ij_gauss(const coordinate position_i, const coordinate position_j);            // Gauss interaction function.
 
         // Morse potential.
-        const double a_morse {2};
-        const double r_morse {0.25}; 
-        const double D_morse {4};
         coordinate get_force_ij_morse(const coordinate position_i, const coordinate position_j);            // Morse interaction function.
         //##################################################################################################################################
 
@@ -94,14 +89,37 @@ inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, cons
 
 
 // Gaussian potential.
+// const double sigma_2_gauss {0.5}; // sigma^2.
+// const double alpha_gauss {2}; // exponent in exponential (==2 for Gauss).
+// inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
+
+//     const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
+    
+//     const double dist_sq {dist.x*dist.x + dist.y*dist.y};
+
+//     const double pref {-kappa/(sigma_2_gauss)};
+//     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
+
+//     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
+
+//     return force_ij;
+
+// }
+
+// Gaussian potential.
+const double sigma_gauss {sqrt(0.5)}; // Sigma.
+const double alpha_gauss {2};         // Exponent in exponential (==2 for Gauss).
+
+const double prefactor_gauss {alpha_gauss/pow(sqrt(2)*sigma_gauss, alpha_gauss)};   // Help constants.
+const double denominator_gauss {sqrt(2)*sigma_gauss};
+
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
 
-    const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
+    const coordinate dist {get_distances_ij(position_i, position_j)};  // Get (dx, dy) tupel.
     
-    const double dist_sq {dist.x*dist.x + dist.y*dist.y};
+    const double distance {sqrt(dist.x*dist.x + dist.y*dist.y)};
 
-    const double pref {-kappa/(sigma_2_gauss)};
-    const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
+    const double expo_term {-kappa * prefactor_gauss * pow(distance, alpha_gauss-2) * exp( - pow(distance/denominator_gauss, alpha_gauss) )};
 
     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
 
@@ -112,14 +130,18 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, co
 
 
 // Morse potential.
+const double a_morse {4};
+const double r_morse {0}; 
+const double D_morse {1};
+
 inline coordinate IPS_model:: get_force_ij_morse(const coordinate position_i, const coordinate position_j){
 
-    const coordinate dist {get_distances_ij(position_i, position_j)};  // Gets (dx, dy) tupel.
+    const coordinate dist {get_distances_ij(position_i, position_j)};  // Get (dx, dy) tupel.
     
-    const double r {sqrt(dist.x*dist.x + dist.y*dist.y)};
+    const double distance {sqrt(dist.x*dist.x + dist.y*dist.y)};
 
-    const double expo {exp(-a_morse * (r-r_morse))}; 
-    const double pref {kappa * a_morse * D_morse * (expo*expo-expo) / r};
+    const double expo {exp(-a_morse * (distance-r_morse))}; 
+    const double pref {kappa * a_morse * D_morse * (expo*expo-expo) / distance};
 
     coordinate force_ij {pref*dist.x, pref*dist.y};
 
