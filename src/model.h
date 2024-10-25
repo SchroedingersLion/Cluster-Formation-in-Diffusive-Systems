@@ -61,6 +61,7 @@ class IPS_model {
         
         // Gaussian potential.
         coordinate get_force_ij_gauss(const coordinate position_i, const coordinate position_j);            // Gauss interaction function.
+        double my_pow(double x, size_t n);  // Help function used in get_force_ij_gauss.
 
         // Morse potential.
         coordinate get_force_ij_morse(const coordinate position_i, const coordinate position_j);            // Morse interaction function.
@@ -108,7 +109,7 @@ inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, cons
 
 // Gaussian potential.
 const double sigma_gauss {sqrt(0.5)}; // Sigma.
-const double alpha_gauss {2};         // Exponent in exponential (==2 for Gauss).
+const int alpha_gauss {2};         // Exponent in exponential (==2 for Gauss).
 
 const double prefactor_gauss {alpha_gauss/pow(sqrt(2)*sigma_gauss, alpha_gauss)};   // Help constants.
 const double denominator_gauss {sqrt(2)*sigma_gauss};
@@ -119,7 +120,9 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, co
     
     const double distance {sqrt(dist.x*dist.x + dist.y*dist.y)};
 
-    const double expo_term {-kappa * prefactor_gauss * pow(distance, alpha_gauss-2) * exp( - pow(distance/denominator_gauss, alpha_gauss) )};
+    const double expo_term {-kappa * prefactor_gauss * my_pow(distance, alpha_gauss-2) * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
+    // const double expo_term {-kappa * prefactor_gauss  * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
+
 
     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
 
@@ -127,6 +130,16 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, co
 
 }
 
+inline double IPS_model:: my_pow(double x, size_t n){
+    double r = 1.0;
+
+    while(n > 0){
+        r *= x;
+        --n;
+    }
+
+    return r;
+}
 
 
 // Morse potential.
