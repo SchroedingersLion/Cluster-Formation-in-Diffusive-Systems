@@ -48,7 +48,7 @@ ax[0].plot(times, COM_dist)
 ax[1].plot(times, msd)
 ax[2].plot(times, Tkin)
 
-ax[0].set_title("Mean Distance to Center Of Mass")
+ax[0].set_title("Mean Distance to Center of Mass")
 ax[1].set_title("Mean Squared Displacement")
 ax[2].set_title("Kinetic Temperature")
 
