@@ -143,7 +143,7 @@ inline double IPS_model:: my_pow(double x, size_t n){
 
 
 // Morse potential.
-const double a_morse {2};
+const double a_morse {4};
 const double r_morse {0}; 
 const double D_morse {1};
 
