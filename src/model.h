@@ -90,39 +90,16 @@ inline coordinate IPS_model:: get_distances_ij(const coordinate position_i, cons
 
 
 // Gaussian potential.
-// const double sigma_2_gauss {0.5}; // sigma^2.
-// const double alpha_gauss {2}; // exponent in exponential (==2 for Gauss).
-// inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
-
-//     const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
-    
-//     const double dist_sq {dist.x*dist.x + dist.y*dist.y};
-
-//     const double pref {-kappa/(sigma_2_gauss)};
-//     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
-
-//     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
-
-//     return force_ij;
-
-// }
-
-// Gaussian potential.
-const double sigma_gauss {sqrt(0.5)}; // Sigma.
-const int alpha_gauss {2};         // Exponent in exponential (==2 for Gauss).
-
-const double prefactor_gauss {alpha_gauss/pow(sqrt(2)*sigma_gauss, alpha_gauss)};   // Help constants.
-const double denominator_gauss {sqrt(2)*sigma_gauss};
+const double sigma_2_gauss {0.5}; // sigma^2.
 
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
 
-    const coordinate dist {get_distances_ij(position_i, position_j)};  // Get (dx, dy) tupel.
+    const coordinate dist {get_distances_ij(position_i, position_j)};  // gets (dx, dy) tupel.
     
-    const double distance {sqrt(dist.x*dist.x + dist.y*dist.y)};
+    const double dist_sq {dist.x*dist.x + dist.y*dist.y};
 
-    const double expo_term {-kappa * prefactor_gauss * my_pow(distance, alpha_gauss-2) * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
-    // const double expo_term {-kappa * prefactor_gauss  * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
-
+    const double pref {-kappa/(sigma_2_gauss)};
+    const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
 
@@ -130,16 +107,39 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, co
 
 }
 
-inline double IPS_model:: my_pow(double x, size_t n){
-    double r = 1.0;
+// // Gaussian potential.
+// const double sigma_gauss {sqrt(0.5)}; // Sigma.
+// const int alpha_gauss {2};         // Exponent in exponential (==2 for Gauss).
 
-    while(n > 0){
-        r *= x;
-        --n;
-    }
+// const double prefactor_gauss {alpha_gauss/pow(sqrt(2)*sigma_gauss, alpha_gauss)};   // Help constants.
+// const double denominator_gauss {sqrt(2)*sigma_gauss};
 
-    return r;
-}
+// inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
+
+//     const coordinate dist {get_distances_ij(position_i, position_j)};  // Get (dx, dy) tupel.
+    
+//     const double distance {sqrt(dist.x*dist.x + dist.y*dist.y)};
+
+//     const double expo_term {-kappa * prefactor_gauss * my_pow(distance, alpha_gauss-2) * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
+//     // const double expo_term {-kappa * prefactor_gauss  * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
+
+
+//     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
+
+//     return force_ij;
+
+// }
+
+// inline double IPS_model:: my_pow(double x, size_t n){
+//     double r = 1.0;
+
+//     while(n > 0){
+//         r *= x;
+//         --n;
+//     }
+
+//     return r;
+// }
 
 
 // Morse potential.
