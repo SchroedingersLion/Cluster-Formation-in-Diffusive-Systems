@@ -61,7 +61,7 @@ class IPS_model {
         
         // Gaussian potential.
         coordinate get_force_ij_gauss(const coordinate position_i, const coordinate position_j);            // Gauss interaction function.
-        double my_pow(double x, size_t n);  // Help function used in get_force_ij_gauss.
+        // double my_pow(double x, size_t n);  // Help function used in get_force_ij_gauss.
 
         // Morse potential.
         coordinate get_force_ij_morse(const coordinate position_i, const coordinate position_j);            // Morse interaction function.
