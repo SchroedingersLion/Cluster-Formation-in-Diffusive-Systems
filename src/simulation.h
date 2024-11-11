@@ -181,8 +181,8 @@ inline void simulation:: compute_force_par()
     for (int i = 0; i < model.N_particles; ++i) {
         for (int j = i + 1; j < model.N_particles; ++j) {
 
-        // coordinate force_ij = (model.*get_force_ij)(model.positions[i], model.positions[j]);
-        coordinate force_ij = (model.*(model.get_force_ij))(model.positions[i], model.positions[j]);  // This syntax is disgusting!
+        coordinate distance = model.get_distances_ij(i, j);
+        coordinate force_ij = (model.*(model.get_force_ij))(distance);  // This syntax is disgusting!
         
         std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
         
