@@ -70,7 +70,7 @@ class simulation {
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
-                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate{0,0}));
+                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate{0}));
 
             }; 
 
@@ -115,23 +115,17 @@ inline void simulation:: set_initial_position(){
     // Square lattice initialization.
 
     // Obtain number of particles per box dimension (for even spacing).
-    int Nx = static_cast<int>(floor(sqrt(model.N_particles)));
-    while (model.N_particles%Nx != 0) Nx += 1;
-    int Ny = model.N_particles/Nx;
+    int Nx = model.N_particles;
     
     const double L_mod = model.L-0.00001; // To ensure no particle is placed on the edge.
 
     const double dx = 2*L_mod/Nx; // Spacing between particles.
-    const double dy = 2*L_mod/Ny;
 
     // Place particles.
-    for (int iy=0; iy<Ny; ++iy){
-        for(int ix=0; ix<Nx; ++ix){
+    for(int ix=0; ix<Nx; ++ix){
 
-            model.init_positions[iy*Nx + ix].x = -L_mod + ix*dx;
-            model.init_positions[iy*Nx + ix].y = -L_mod + iy*dy;
+        model.init_positions[ix].x = -L_mod + ix*dx;
 
-        }
     }
 
     model.positions = model.init_positions;
@@ -147,7 +141,6 @@ inline void simulation:: set_initial_position(const int seed){
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
     for (int i=0; i<model.N_particles; ++i){
         model.init_positions[i].x = box_uniform(twister);
-        model.init_positions[i].y = box_uniform(twister);
     }
 
     model.positions = model.init_positions;
@@ -164,7 +157,6 @@ inline void simulation:: set_initial_velocities(){
     
     for (int i=0; i<model.N_particles; ++i){
         model.velocities[i].x = normal(twister);
-        model.velocities[i].y = normal(twister);
     }
 
 }
@@ -175,7 +167,7 @@ inline void simulation:: compute_force_par()
 {
 
     for (auto& forces_for_specific_task : forces_for_all_tasks)
-        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{0,0});
+        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{0});
 
     #pragma omp parallel for schedule(dynamic) num_threads(THREADS)
     for (int i = 0; i < model.N_particles; ++i) {
@@ -187,20 +179,17 @@ inline void simulation:: compute_force_par()
         std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
         
         forces_for_this_task[i].x += force_ij.x;
-        forces_for_this_task[i].y += force_ij.y;
         forces_for_this_task[j].x += -force_ij.x;
-        forces_for_this_task[j].y += -force_ij.y;
         
         }
     }
 
     // Sum all of the task-specific forces into the output parameter.
-    std:: fill(model.forces.begin(), model.forces.end(), coordinate{0, 0});
+    std:: fill(model.forces.begin(), model.forces.end(), coordinate{0});
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
         for (int i = 0; i < model.N_particles; ++i)
         {
         model.forces[i].x += forces_for_specific_task[i].x;
-        model.forces[i].y += forces_for_specific_task[i].y;
         }
 }
 
@@ -210,7 +199,6 @@ inline void simulation:: A_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i){
         model.positions[i].x += h*model.velocities[i].x;
-        model.positions[i].y += h*model.velocities[i].y;
     }
 
 }
@@ -221,7 +209,6 @@ inline void simulation:: B_step(const double h){
     
     for (int i=0; i<model.N_particles; ++i){
         model.velocities[i].x += h*model.forces[i].x;
-        model.velocities[i].y += h*model.forces[i].y;
     }
 
 }
@@ -236,7 +223,6 @@ inline void simulation:: O_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i){
         model.velocities[i].x = a*model.velocities[i].x + pref*normal(twister); 
-        model.velocities[i].y = a*model.velocities[i].y + pref*normal(twister); 
     }
 
 }
@@ -268,21 +254,15 @@ inline void simulation:: U_step(const double h){
     for (int i=0; i<model.N_particles; ++i){
 
         xi1.x = normal(twister);
-        xi1.y = normal(twister);
         xi2.x = normal(twister);
-        xi2.y = normal(twister);
 
         Z1.x = pref_Z1 * xi1.x;
-        Z1.y = pref_Z1 * xi1.y;
 
         Z2.x = pref_Z2_total1 * xi1.x + pref_Z2_total2 * xi2.x;
-        Z2.y = pref_Z2_total1 * xi1.y + pref_Z2_total2 * xi2.y;
 
         model.positions[i].x += pref_U2 * model.velocities[i].x + pref_U3 * (Z1.x - Z2.x);
-        model.positions[i].y += pref_U2 * model.velocities[i].y + pref_U3 * (Z1.y - Z2.y);
 
         model.velocities[i].x = pref_U1 * model.velocities[i].x + pref_U4 * Z2.x;
-        model.velocities[i].y = pref_U1 * model.velocities[i].y + pref_U4 * Z2.y;
 
     }
 
@@ -292,15 +272,13 @@ inline void simulation:: U_step(const double h){
 
 inline void simulation:: apply_periodic_boundaries(){
     
-    double x, y;
+    double x;
     const double L {model.L};
     const double two_L {2*L};
 
     for (int i=0; i<model.N_particles; ++i){
         x = model.positions[i].x;
         model.positions[i].x = x>L ? x-two_L : (x<-L ? x + two_L : x);
-        y = model.positions[i].y;
-        model.positions[i].y = y>L ? y-two_L : (y<-L ? y + two_L : y);
     }
 }
 
