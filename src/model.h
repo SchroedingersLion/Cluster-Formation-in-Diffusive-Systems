@@ -11,7 +11,6 @@
 
 struct coordinate{    // Used to denote positions, velocities and forces.
     double x{0};
-    double y{0};
 };
 
 
@@ -76,12 +75,10 @@ inline coordinate IPS_model:: get_distances_ij(const size_t i, const size_t j){
     const double two_L {2*L};
 
     double dx {positions[i].x - positions[j].x};
-    double dy {positions[i].y - positions[j].y};
 
     dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
-    dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
 
-    coordinate distances {dx, dy};
+    coordinate distances {dx};
 
     return distances;
 
@@ -94,12 +91,12 @@ const double sigma_2_gauss {0.5}; // sigma^2.
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate distance){
 
     
-    const double dist_sq {distance.x*distance.x + distance.y*distance.y};
+    const double dist_sq {distance.x*distance.x};
 
     const double pref {-kappa/(sigma_2_gauss)};
     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
-    coordinate force_ij {expo_term*distance.x, expo_term*distance.y};
+    coordinate force_ij {expo_term*distance.x};
 
     return force_ij;
 
@@ -147,12 +144,12 @@ const double D_morse {1};
 
 inline coordinate IPS_model:: get_force_ij_morse(const coordinate distance){
     
-    const double dist {sqrt(distance.x*distance.x + distance.y*distance.y)};
+    const double dist {sqrt(distance.x*distance.x)};
 
     const double expo {exp(-a_morse * (dist-r_morse))}; 
     const double pref {kappa * a_morse * D_morse * (expo*expo-expo) / dist};
 
-    coordinate force_ij {pref*distance.x, pref*distance.y};
+    coordinate force_ij {pref*distance.x};
 
     return force_ij;
 
