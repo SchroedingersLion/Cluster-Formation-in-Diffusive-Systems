@@ -18,21 +18,7 @@ plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
 #plt.rc('ytick', labelsize=22) 
 
-### Function to update animation.
-def update(frame, x_coords, times, scatterplot, time_text):
-    
-    # for each frame, update the data stored on each artist.
-    x = x_coords[:frame]
 
-    for i in range(0,len(x)):
-        xdata = x[i]
-        ydata = np.ones(xdata.shape)
-        data = np.stack([xdata, ydata]).T
-        scatterplot.set_offsets(data)
-
-    time_text.set_text(f'Time: {times[frame]}')
-
-    return (scatterplot)
 
 
 # Parse the command-line arguments.
@@ -57,12 +43,14 @@ fps = args.fps
 arr = np.loadtxt(filename, delimiter=" ", skiprows=1) 
 
 # Determine boxsize from coordinates.
-xlim = [np.min(arr[:,1]), np.max(arr[:,1])]
+ylim = [np.min(arr[:,1]), np.max(arr[:,1])]
+threshold = (ylim[1]-ylim[0])/2 # Half of the boxsize, used to exclude periodic boundary jumps from plot.
 
 # Create animation window.
 fig, ax = plt.subplots(figsize=(10, 10))
-ax.set(xlim=xlim, xlabel='x', ylabel='y')
+ax.set(ylim=ylim, xlabel='Time', ylabel='x')
 ax.set_title(title)
+colors = mpl.cm.tab10.colors
 
 # Compute number of particles (given by the first row where the time is no longer 0).
 N_part = np.where(arr[:,0]!=0)[0][0]
@@ -79,16 +67,31 @@ for i in range(0, N_frames):
     x_coords[i,:] = arr[i*N_part : (i+1)*N_part, 1]
     times[i] = arr[i*N_part, 0]
 
-# Create scatter plot for animation function.
-scat = ax.scatter(x_coords[0], np.ones(x_coords[0].shape), c="b", s=5,)
-time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+# Plot particle trajectories one by one.
+for i in range(0, N_part):
 
-# Plot animation.
-ani = animation.FuncAnimation(fig=fig, func=update, frames=N_frames, fargs=(x_coords, times, scat, time_text), interval=interval)
+    positions = x_coords[:,i]
+
+    # Need to split the data to avoid plotting of jumps caused by periodic boundaries.
+    jumps = np.abs(np.diff(positions)) > threshold
+    # Create segments for continuous plotting
+    segments = []
+    start_idx = 0
+    for k, jump in enumerate(jumps):
+        if jump:  # End current segment at the jump
+            segments.append((times[start_idx:k + 1], positions[start_idx:k + 1]))
+            start_idx = k + 1
+    # Append the last segment
+    segments.append((times[start_idx:], positions[start_idx:]))
+    
+    color = colors[i % len(colors)]
+    for t_seg, p_seg in segments:
+        ax.plot(t_seg, p_seg, color=color)
+
 # Save animation.
-if save_file:
-    print("Saving animation...")
-    ani.save(save_file, writer='ffmpeg', fps=fps)
+# if save_file:
+#     print("Saving animation...")
+#     ani.save(save_file, writer='ffmpeg', fps=fps)
 
 plt.show()
 
