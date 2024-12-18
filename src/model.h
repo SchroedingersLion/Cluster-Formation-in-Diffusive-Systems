@@ -90,7 +90,6 @@ inline coordinate IPS_model:: get_distances_ij(const size_t i, const size_t j){
 
 // Gaussian potential.
 const double sigma_2_gauss {0.5}; // sigma^2.
-
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate distance){
 
     
