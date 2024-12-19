@@ -149,7 +149,7 @@ inline coordinate IPS_model:: get_force_ij_morse(const coordinate distance){
     const double dist {sqrt(distance.x*distance.x + distance.y*distance.y)};
 
     const double expo {exp(-a_morse * (dist-r_morse))}; 
-    const double pref {kappa * a_morse * D_morse * (expo*expo-expo) / dist};
+    const double pref {kappa * 2 * a_morse * D_morse * (expo*expo-expo) / dist};
 
     coordinate force_ij {pref*distance.x, pref*distance.y};
 
