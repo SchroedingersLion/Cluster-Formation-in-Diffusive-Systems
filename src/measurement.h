@@ -78,7 +78,7 @@ class measurement {
         int k {0};                                     // Current index of results array to store measurements in.
         
         bool trajectory;    // If true, trajectory will stored and printed to file.
-        std:: vector <std:: vector <coordinate>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
+        std:: vector <std:: vector <std:: vector<double>>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
         
         std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
@@ -109,35 +109,44 @@ inline float measurement:: get_center_of_mass_distance(){
 // Journal of Graphics Tools, Vol. 13, No. 4, December 2008, pp. 53-60. 
 
     // Compute center of mass.
-    coordinate center_of_mass;
+    std:: vector<double> center_of_mass;
     const double two_L {2*model.L};
     const double pref {2*M_PI/two_L};
     const double pref2 {1/pref};
-    coordinate xi, zeta, theta;
+    std:: vector<double> xi, zeta, theta;
 
     for (const auto pos : model.positions){
+        for (size_t dim=0; dim<model.dimension; ++dim){
         
-        theta.x = pref*pos.x;
-        xi.x += cos(theta.x);
-        zeta.x += sin(theta.x);
+            theta[dim] = pref*pos[dim];
+            xi[dim] += cos(theta[dim]);
+            zeta[dim] += sin(theta[dim]);
 
+        }
     }
-    xi.x *= pref2/model.N_particles;
-    zeta.x *= pref2/model.N_particles;
+    
+    for (size_t dim=0; dim<model.dimension; ++dim){
+        xi[dim] *= pref2/model.N_particles;
+        zeta[dim] *= pref2/model.N_particles;
 
-    center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
-
+        center_of_mass[dim] = pref2 * (atan2(-zeta[dim], -xi[dim]) + M_PI);
+    }
 
     // Compute distance to COM.
-    float dist {0}, dist_x {0}, dist_y{0};
+    float dist {0};
+    std:: vector <double> dist_dim(model.dimension);
+    double sum;
     for (const auto pos : model.positions){
-        dist_x = pos.x - center_of_mass.x;
+        sum = 0;
+        for (size_t dim=0; dim<model.dimension; ++dim){
+            dist_dim[dim] = pos[dim] - center_of_mass[dim];
 
-        if (dist_x > model.L)       dist_x -= two_L;  // periodic boundaries.
-        else if (dist_x < -model.L) dist_x += two_L;
-        
-        dist += sqrt(dist_x*dist_x);
-
+            if (dist_dim[dim] > model.L)       dist_dim[dim] -= two_L;  // periodic boundaries.
+            else if (dist_dim[dim] < -model.L) dist_dim[dim] += two_L;
+            
+            sum += dist_dim[dim]*dist_dim[dim];
+        }
+        dist += sqrt(sum);
     }
 
     return dist/model.N_particles;
@@ -148,18 +157,20 @@ inline float measurement:: get_center_of_mass_distance(){
 
 inline float measurement:: get_msd(){
     
-    coordinate diff;
+    std:: vector<double> diff(model.dimension);
     double msd {0}, two_L {2*model.L};
 
     for(int i=0; i<model.positions.size(); ++i){
         
-        diff.x = model.positions[i].x - model.init_positions[i].x;
+        for (size_t dim=0; dim<model.dimension; ++dim){
 
-        if (diff.x > model.L)         diff.x -= two_L;
-        else if (diff.x < -model.L)   diff.x += two_L;
+            diff[dim] = model.positions[i][dim] - model.init_positions[i][dim];
 
-        msd += diff.x*diff.x;
+            if (diff[dim] > model.L)         diff[dim] -= two_L;
+            else if (diff[dim] < -model.L)   diff[dim] += two_L;
 
+            msd += diff[dim]*diff[dim];
+        }
     }
 
     return 1./model.positions.size() * msd;
@@ -172,7 +183,9 @@ inline float measurement:: get_Tkin(){
     double Tkin {0};
 
     for(auto vel : model.velocities){
-        Tkin += vel.x*vel.x;
+        for (size_t dim=0; dim<model.dimension; ++dim){
+            Tkin += vel[dim]*vel[dim];
+        }
     }
 
     return Tkin/(2*model.velocities.size());
@@ -217,28 +230,35 @@ inline void measurement:: print_results(const std:: string outputname){
 
     // Write trajectory if needed.
     if (trajectory){
-        std:: cout << "Writing trajectory...\n";
-        std:: ofstream traj_file {outputname+"_trajectory"};
-        
-        // Write header with specified column names.
-        traj_file << "Time " << "x " << "y\n";
+        if (model.dimension>3){
+            std:: cout << "Writing trajectory...\n";
+            std:: ofstream traj_file {outputname+"_trajectory"};
+            
+            // Write header with specified column names.
+            traj_file << "Time";
+            for (size_t dim=0; dim<model.dimension; ++dim) traj_file << " dim" + std::to_string(dim+1);
+            traj_file << "\n";
 
-        // Write times and positions.
-        size_t number_particles {trajectory_buffer[0].size()};
-        double time;
-        for ( size_t i=0; i<trajectory_buffer.size(); ++i )
-        {
-            time =  i*N_meas*stepsize;
-            for ( size_t j=0; j<number_particles; ++j )
+            // Write times and positions.
+            size_t number_particles {trajectory_buffer[0].size()};
+            double time;
+            for ( size_t i=0; i<trajectory_buffer.size(); ++i )
             {
-                traj_file << time << " " << trajectory_buffer[i][j].x <<  "\n";  
+                time =  i*N_meas*stepsize;
+                for ( size_t j=0; j<number_particles; ++j ){
+                    traj_file << time;
+                    for (size_t dim=0; dim<model.dimension; ++dim){
+                    traj_file << " " << trajectory_buffer[i][j][dim];
+                    }
+                    traj_file << "\n";  
+                }
             }
+
+            traj_file.close();
         }
+        else std:: cout << "WARNING: Trajectory won't be printed for dimension higher than 3\n";
 
-        traj_file.close();
     }
-
-
 }
 
 

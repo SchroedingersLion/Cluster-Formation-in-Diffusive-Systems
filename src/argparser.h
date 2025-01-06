@@ -19,7 +19,7 @@ const std:: string  _integrator_default {"BAOAB"};
 const std:: string  _threads_default {"4"};
 const std:: string  _seed_default {"1"};
 const std:: string  _output_name_default {"results.csv"};
-
+const std:: string  _dimension_default {"1"};
 
 std:: pair <cxxopts:: ParseResult, cxxopts:: Options> parseCommandLine(int argc, char* argv[]) {
 std::string description = R"(
@@ -47,7 +47,8 @@ std::string description = R"(
         ("threads",     "Number of threads used in the force evaluation.",              cxxopts:: value <int>()->default_value(_threads_default))
         ("seed",        "Randomseed.",                                                  cxxopts:: value <int>()->default_value(_seed_default))
         ("output_name", "Name of the printed file holding the results.",                cxxopts:: value <std:: string>()->default_value(_output_name_default))               
-        ("trajectory",  "If flag is set, trajetory will be printed to file.",           cxxopts:: value<bool>())           
+        ("trajectory",  "If flag is set, trajetory will be printed to file.",           cxxopts:: value<bool>())
+        ("dimension",   "Dimensionality of the problem.",                               cxxopts:: value <int>()->default_value(_dimension_default))           
         ("help",        "Print help");
 
     // Parse command line.
@@ -70,6 +71,7 @@ struct ParsedValues{
     int seed;
     std:: string output_name;
     bool trajectory;
+    int dimension;
 };
 
 
@@ -92,6 +94,7 @@ ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
     values.seed        = result.count("seed")        ?   result["seed"].as<int>()               : std:: stoi(_seed_default);
     values.output_name = result.count("output_name") ?   result["output_name"].as<std::string>(): _output_name_default;
     values.trajectory  = result.count("trajectory");
+    values.dimension   = result.count("dimension")   ?   result["dimension"].as<int>()          : std:: stoi(_dimension_default);
 
     return values;
 }

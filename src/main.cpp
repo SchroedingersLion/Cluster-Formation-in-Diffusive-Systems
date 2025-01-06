@@ -8,7 +8,7 @@ int main(int argc, char* argv[]){
     ParsedValues vals = processParsedValues(parse_result);
 
     // Set up simulation.
-    IPS_model sys(vals.N_particles, vals.boxlength, vals.forcefield);
+    IPS_model sys(vals.N_particles, vals.boxlength, vals.forcefield, vals.dimension);
 
     simulation simu(sys, 
                     vals.stepsize, 

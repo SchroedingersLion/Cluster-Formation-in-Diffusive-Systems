@@ -30,7 +30,7 @@ class IPS_model {
                   L {boxlength/2}, 
                   kappa {1./N_particles}, 
                   forcefield {forcefield},
-                  dimension {dimension}, 
+                  dimension {dimension} 
             {
 
                 std:: cout  << "Building IPS model with boxlength " << boxlength << " and " << N_particles << " particles.\n"
