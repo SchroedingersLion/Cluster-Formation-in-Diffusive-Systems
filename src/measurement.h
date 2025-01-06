@@ -109,11 +109,10 @@ inline float measurement:: get_center_of_mass_distance(){
 // Journal of Graphics Tools, Vol. 13, No. 4, December 2008, pp. 53-60. 
 
     // Compute center of mass.
-    std:: vector<double> center_of_mass;
     const double two_L {2*model.L};
     const double pref {2*M_PI/two_L};
     const double pref2 {1/pref};
-    std:: vector<double> xi, zeta, theta;
+    std:: vector<double> center_of_mass(model.dimension), xi(model.dimension), zeta(model.dimension), theta(model.dimension);
 
     for (const auto pos : model.positions){
         for (size_t dim=0; dim<model.dimension; ++dim){
