@@ -47,7 +47,8 @@ class IPS_model {
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
                 else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
-                else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss' and 'morse'." );
+                else if (forcefield=="gem4") get_force_ij = &IPS_model:: get_force_ij_gem4;
+                else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss', 'morse', and 'gem4'." );
 
             }
 
@@ -59,10 +60,14 @@ class IPS_model {
         // ########## FORCES ###############################################################################################################        
         // Gaussian potential.
         coordinate get_force_ij_gauss(const coordinate distance);            // Gauss interaction function.
-        // double my_pow(double x, size_t n);  // Help function used in get_force_ij_gauss.
 
         // Morse potential.
         coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
+
+        // GEM-4 potential
+        coordinate get_force_ij_gem4(const coordinate distance);            // GEM-4 interaction function.
+        double my_pow(double x, int n);  // Help function used in get_force_ij_gauss.
+
         //##################################################################################################################################
 
 };
@@ -124,16 +129,37 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate distance){
 
 // }
 
-// inline double IPS_model:: my_pow(double x, size_t n){
-//     double r = 1.0;
 
-//     while(n > 0){
-//         r *= x;
-//         --n;
-//     }
+// GEM-Alpha potential (reduces to Gaussian for alpha=2, but is less efficient compute-wise).
+const double sigma_2_gem4 {0.5};
+const double sqrt_two_sigma_2_gem4 {sqrt(2*sigma_2_gem4)};
+const int alpha_gem4 {4};
+const double pref_gem4 {alpha_gem4 / pow(sqrt_two_sigma_2_gem4, alpha_gem4)};
+inline coordinate IPS_model:: get_force_ij_gem4(const coordinate distance){
 
-//     return r;
-// }
+    const double normed_distance {sqrt(distance.x*distance.x) / sqrt_two_sigma_2_gem4};
+    const double exponent {my_pow(normed_distance, alpha_gem4)};
+
+    const double pref {-kappa*pref_gem4*exponent/normed_distance};
+    const double expo_term {pref * exp(-exponent)};
+
+    coordinate force_ij {distance.x > 0 ? expo_term : -expo_term};
+
+    return force_ij;
+
+}
+
+
+inline double IPS_model:: my_pow(double x, int n){
+    double r = 1.0;
+
+    while(n > 0){
+        r *= x;
+        --n;
+    }
+
+    return r;
+}
 
 
 // Morse potential.
