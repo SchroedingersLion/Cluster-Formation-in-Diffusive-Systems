@@ -36,7 +36,7 @@ std::string description = R"(
     options.add_options()
         ("N_particles", "Number of particles.",                                         cxxopts:: value <int>()->default_value(_N_particles_default))
         ("boxlength",   "Length of edge of square simulation box.",                     cxxopts:: value <double>()->default_value(_boxlength_default))
-        ("forcefield",  "Forcefield between two particles. Either 'gauss' or 'morse'.", cxxopts:: value <std:: string>()->default_value(_forcefield_default))
+        ("forcefield",  "Forcefield between two particles. Either 'gauss', 'morse', or 'gem4'.", cxxopts:: value <std:: string>()->default_value(_forcefield_default))
         ("init_mode",   "Initial positions of the system. Either 'uniform' or 'grid'.", cxxopts:: value <std:: string>()->default_value(_init_mode_default))
         ("beta",        "Inverse temperature parameter in Langevin dynamics.",          cxxopts:: value <double>()->default_value(_beta_default))
         ("gamma",       "Friction parameter in Langevin dynamics.",                     cxxopts:: value <double>()->default_value(_gamma_default))
