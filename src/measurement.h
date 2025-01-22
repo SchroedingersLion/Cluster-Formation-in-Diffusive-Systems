@@ -78,7 +78,7 @@ class measurement {
         int k {0};                                     // Current index of results array to store measurements in.
         
         bool trajectory;    // If true, trajectory will stored and printed to file.
-        std:: vector <std:: vector <std:: vector<double>>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
+        std:: vector <std:: vector <double>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
         
         std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
@@ -114,10 +114,10 @@ inline float measurement:: get_center_of_mass_distance(){
     const double pref2 {1/pref};
     std:: vector<double> center_of_mass(model.dimension), xi(model.dimension), zeta(model.dimension), theta(model.dimension);
 
-    for (const auto pos : model.positions){
+    for (size_t n=0; n<model.N_particles; ++n){
         for (size_t dim=0; dim<model.dimension; ++dim){
         
-            theta[dim] = pref*pos[dim];
+            theta[dim] = pref*model.positions[n*model.dimension+dim];
             xi[dim] += cos(theta[dim]);
             zeta[dim] += sin(theta[dim]);
 
@@ -135,10 +135,10 @@ inline float measurement:: get_center_of_mass_distance(){
     float dist {0};
     std:: vector <double> dist_dim(model.dimension);
     double sum;
-    for (const auto pos : model.positions){
+    for (size_t n=0; n<model.N_particles; ++n){
         sum = 0;
         for (size_t dim=0; dim<model.dimension; ++dim){
-            dist_dim[dim] = pos[dim] - center_of_mass[dim];
+            dist_dim[dim] = model.positions[n*model.dimension+dim] - center_of_mass[dim];
 
             if (dist_dim[dim] > model.L)       dist_dim[dim] -= two_L;  // periodic boundaries.
             else if (dist_dim[dim] < -model.L) dist_dim[dim] += two_L;
@@ -159,11 +159,11 @@ inline float measurement:: get_msd(){
     std:: vector<double> diff(model.dimension);
     double msd {0}, two_L {2*model.L};
 
-    for(int i=0; i<model.positions.size(); ++i){
+    for(int i=0; i<model.N_particles; ++i){
         
         for (size_t dim=0; dim<model.dimension; ++dim){
 
-            diff[dim] = model.positions[i][dim] - model.init_positions[i][dim];
+            diff[dim] = model.positions[i*model.dimension+dim] - model.init_positions[i*model.dimension+dim];
 
             if (diff[dim] > model.L)         diff[dim] -= two_L;
             else if (diff[dim] < -model.L)   diff[dim] += two_L;
@@ -180,14 +180,16 @@ inline float measurement:: get_msd(){
 inline float measurement:: get_Tkin(){
 
     double Tkin {0};
+    double v {0};
 
-    for(auto vel : model.velocities){
+    for(int i=0; i<model.N_particles; ++i){
         for (size_t dim=0; dim<model.dimension; ++dim){
-            Tkin += vel[dim]*vel[dim];
+            v = model.velocities[i*model.dimension+dim];
+            Tkin += v*v;
         }
     }
 
-    return Tkin/(2*model.velocities.size());
+    return Tkin/(2*model.N_particles);
 
 }
 
@@ -229,7 +231,7 @@ inline void measurement:: print_results(const std:: string outputname){
 
     // Write trajectory if needed.
     if (trajectory){
-        if (model.dimension>3){
+        if (model.dimension<=3){
             std:: cout << "Writing trajectory...\n";
             std:: ofstream traj_file {outputname+"_trajectory"};
             
@@ -239,15 +241,15 @@ inline void measurement:: print_results(const std:: string outputname){
             traj_file << "\n";
 
             // Write times and positions.
-            size_t number_particles {trajectory_buffer[0].size()};
+            
             double time;
             for ( size_t i=0; i<trajectory_buffer.size(); ++i )
             {
                 time =  i*N_meas*stepsize;
-                for ( size_t j=0; j<number_particles; ++j ){
+                for ( size_t j=0; j<model.N_particles; ++j ){
                     traj_file << time;
                     for (size_t dim=0; dim<model.dimension; ++dim){
-                    traj_file << " " << trajectory_buffer[i][j][dim];
+                    traj_file << " " << trajectory_buffer[i][j*model.dimension+dim];
                     }
                     traj_file << "\n";  
                 }
