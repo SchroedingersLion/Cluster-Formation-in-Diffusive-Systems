@@ -70,7 +70,7 @@ class simulation {
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
-                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <std:: vector <double>> (model.N_particles, std:: vector <double> (model.dimension)));
+                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <double> (model.N_particles*model.dimension));
 
             }; 
 
