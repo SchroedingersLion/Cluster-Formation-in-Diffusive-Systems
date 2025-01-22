@@ -21,8 +21,8 @@ class IPS_model {
         const int N_particles;         // No. of particles.
         const size_t dimension;
         std:: vector <double> positions, init_positions, velocities, forces;
-        std:: vector <double> (IPS_model::* get_force_ij) (const std:: vector <double>); // Points to interaction function between two particles.
-        std:: vector <double> get_distances_ij(const size_t i, const size_t j);                 // Get (dx, dy) tupel of distances between particles i,j.
+        void (IPS_model::* get_force_ij) (const std:: vector <double>&, std:: vector <double>&); // Points to interaction function between two particles.
+        void get_distances_ij(const size_t i, const size_t j, std:: vector<double>& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
 
         // CONSTRUCTOR.
         IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield, const size_t dimension)
@@ -55,7 +55,7 @@ class IPS_model {
         
         // ########## FORCES ###############################################################################################################        
         // Gaussian potential.
-        std:: vector <double> get_force_ij_gauss(const std:: vector <double> distance);            // Gauss interaction function.
+        void get_force_ij_gauss(const std:: vector <double>& distance, std:: vector<double>& force_ij);            // Gauss interaction function.
 
         // Morse potential.
         // coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
@@ -82,11 +82,10 @@ inline void IPS_model:: resize_vectors(){
 }
 
 
-inline std:: vector <double> IPS_model:: get_distances_ij(const size_t i, const size_t j){
+inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, std:: vector<double>& distances){
 
     const double two_L {2*L};
     double dx;
-    std:: vector <double> distances(dimension);
 
     for (size_t dim = 0; dim<dimension; ++dim){
         dx = positions[i*dimension + dim] - positions[j*dimension + dim];
@@ -94,14 +93,14 @@ inline std:: vector <double> IPS_model:: get_distances_ij(const size_t i, const 
         distances[dim] = dx;
     }
 
-    return distances;
+    return;
 
 }
 
 
 // Gaussian potential.
 const double sigma_2_gauss {0.5}; // sigma^2.
-inline std:: vector <double> IPS_model:: get_force_ij_gauss(const std:: vector <double> distance){
+inline void IPS_model:: get_force_ij_gauss(const std:: vector <double>& distance, std:: vector<double>& force_ij){
 
     
     double dist_sq {0};
@@ -110,10 +109,9 @@ inline std:: vector <double> IPS_model:: get_force_ij_gauss(const std:: vector <
     const double pref {-kappa/(sigma_2_gauss)};
     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
-    std:: vector <double> force_ij(dimension);
     for (size_t dim = 0; dim<dimension; ++dim) force_ij[dim] = expo_term*distance[dim];
 
-    return force_ij;
+    return;
 
 }
 

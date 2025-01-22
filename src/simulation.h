@@ -88,7 +88,7 @@ class simulation {
         const int N_iter;
         const int N_meas;
         const int THREADS;
-        std:: vector <std:: vector <std:: vector <double>> > forces_for_all_tasks;
+        std:: vector <std:: vector <double>> forces_for_all_tasks;
         const std:: string integrator;  
         const std:: string init_mode;
         const int seed;
@@ -140,7 +140,7 @@ inline void simulation:: set_initial_position(const int seed){
     twister.seed(seed);
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
     for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<model.dimension; ++dim) model.init_positions[i][dim] = box_uniform(twister);
+        for (size_t dim=0; dim<model.dimension; ++dim) model.init_positions[i*model.dimension + dim] = box_uniform(twister);
     }
 
     model.positions = model.init_positions;
@@ -156,7 +156,7 @@ inline void simulation:: set_initial_velocities(){
     std:: normal_distribution<> normal{0, sqrt(1/beta)};
     
     for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<model.dimension; ++dim) model.velocities[i][dim] = normal(twister);
+        for (size_t dim=0; dim<model.dimension; ++dim) model.velocities[i*model.dimension + dim] = normal(twister);
     }
 
 }
@@ -166,33 +166,39 @@ inline void simulation:: set_initial_velocities(){
 inline void simulation:: compute_force_par()
 {
 
-    for (auto& forces_for_specific_task : forces_for_all_tasks)
-        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), std:: vector <double> (model.dimension));
+    #pragma omp parallel num_threads(THREADS)
+    {
+        thread_local std::vector<double> distance(model.dimension);
+        thread_local std::vector<double> force_ij(model.dimension);
 
-    #pragma omp parallel for schedule(dynamic) num_threads(THREADS)
-    for (int i = 0; i < model.N_particles; ++i) {
-        for (int j = i + 1; j < model.N_particles; ++j) {
+        #pragma omp for schedule(dynamic)
+        for (int i = 0; i < model.N_particles; ++i) {
+            for (int j = i + 1; j < model.N_particles; ++j) {
+                
+                std::fill(distance.begin(), distance.end(), 0.0);
 
-        std:: vector <double> distance = model.get_distances_ij(i, j);
-        std:: vector <double> force_ij = (model.*(model.get_force_ij))(distance);  // This syntax is disgusting!
-        
-        std:: vector <std:: vector <double>>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
-        
-        for (size_t dim = 0; dim<model.dimension; ++dim){
-            forces_for_this_task[i][dim] += force_ij[dim];
-            forces_for_this_task[j][dim] += -force_ij[dim];
-        }
-        
+                model.get_distances_ij(i, j, distance);
+                (model.*(model.get_force_ij))(distance, force_ij);
+
+                std:: vector <double>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+                
+                for (size_t dim = 0; dim<model.dimension; ++dim){
+                    forces_for_this_task[i*model.dimension + dim] += force_ij[dim];
+                    forces_for_this_task[j*model.dimension + dim] += -force_ij[dim];
+                }
+
+            }
         }
     }
 
-    // Sum all of the task-specific forces into the output parameter.
-    std:: fill(model.forces.begin(), model.forces.end(), std:: vector <double> (model.dimension));
+        // Sum all of the task-specific forces into the output parameter.
+    std:: fill(model.forces.begin(), model.forces.end(), 0.0);
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
         for (int i = 0; i < model.N_particles; ++i)
             for (size_t dim = 0; dim<model.dimension; ++dim){
-                model.forces[i][dim] += forces_for_specific_task[i][dim];
+                model.forces[i*model.dimension + dim] += forces_for_specific_task[i*model.dimension + dim];
             }
+
 }
 
 
@@ -201,7 +207,7 @@ inline void simulation:: A_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            model.positions[i][dim] += h*model.velocities[i][dim];
+            model.positions[i*model.dimension + dim] += h*model.velocities[i*model.dimension + dim];
         }
 
 }
@@ -212,7 +218,7 @@ inline void simulation:: B_step(const double h){
     
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            model.velocities[i][dim] += h*model.forces[i][dim];
+            model.velocities[i*model.dimension + dim] += h*model.forces[i*model.dimension + dim];
         }
 
 }
@@ -227,7 +233,7 @@ inline void simulation:: O_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            model.velocities[i][dim] = a*model.velocities[i][dim] + pref*normal(twister); 
+            model.velocities[i*model.dimension + dim] = a*model.velocities[i*model.dimension + dim] + pref*normal(twister); 
         }
 
 }
@@ -283,8 +289,8 @@ inline void simulation:: apply_periodic_boundaries(){
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            pos = model.positions[i][dim];
-            model.positions[i][dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
+            pos = model.positions[i*model.dimension + dim];
+            model.positions[i*model.dimension + dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
         }
 }
 
