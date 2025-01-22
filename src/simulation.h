@@ -175,8 +175,6 @@ inline void simulation:: compute_force_par()
         for (int i = 0; i < model.N_particles; ++i) {
             for (int j = i + 1; j < model.N_particles; ++j) {
                 
-                std::fill(distance.begin(), distance.end(), 0.0);
-
                 model.get_distances_ij(i, j, distance);
                 (model.*(model.get_force_ij))(distance, force_ij);
 
