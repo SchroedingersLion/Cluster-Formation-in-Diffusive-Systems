@@ -20,7 +20,7 @@ class IPS_model {
         const double L;                // Box volume = [-L,L]^2.
         const int N_particles;         // No. of particles.
         const size_t dimension;
-        std:: vector <std:: vector <double>> positions, init_positions, velocities, forces;
+        std:: vector <double> positions, init_positions, velocities, forces;
         std:: vector <double> (IPS_model::* get_force_ij) (const std:: vector <double>); // Points to interaction function between two particles.
         std:: vector <double> get_distances_ij(const size_t i, const size_t j);                 // Get (dx, dy) tupel of distances between particles i,j.
 
@@ -74,10 +74,10 @@ class IPS_model {
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
 inline void IPS_model:: resize_vectors(){
 
-    positions.resize(N_particles, std:: vector<double>(dimension));
-    init_positions.resize(N_particles, std:: vector<double>(dimension));
-    velocities.resize(N_particles, std:: vector<double>(dimension));
-    forces.resize(N_particles, std:: vector<double>(dimension));
+    positions.resize(N_particles*dimension);
+    init_positions.resize(N_particles*dimension);
+    velocities.resize(N_particles*dimension);
+    forces.resize(N_particles*dimension);
 
 }
 
@@ -89,7 +89,7 @@ inline std:: vector <double> IPS_model:: get_distances_ij(const size_t i, const 
     std:: vector <double> distances(dimension);
 
     for (size_t dim = 0; dim<dimension; ++dim){
-        dx = positions[i][dim] - positions[j][dim];
+        dx = positions[i*dimension + dim] - positions[j*dimension + dim];
         dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
         distances[dim] = dx;
     }
