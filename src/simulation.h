@@ -360,7 +360,6 @@ inline void simulation:: run(){
         if (i % N_meas == 0) meas.take_measurement();
 
         (this->*integrator_step)();
-        std::cout<<"reached here"<<std::endl;
 
 
         if (i%1000==0) std:: cout << "Iteration "<<i<< " done!" << std:: endl;
