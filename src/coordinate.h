@@ -13,8 +13,13 @@ class coordinate {
         
         // Default constructor.
         coordinate() 
-            : dimension(0) {
+            : dimension {0} {
                 coords.fill(0.0); // Initialize all elements to 0.0.
+        }
+
+        coordinate(size_t dim)
+            : dimension {dim} {
+                coords.fill(0.0);
         }
 
         // Method to set the runtime dimension.
