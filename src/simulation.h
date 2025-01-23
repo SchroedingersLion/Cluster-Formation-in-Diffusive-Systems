@@ -141,7 +141,7 @@ inline void simulation:: set_initial_position(const int seed){
     twister.seed(seed);
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
     for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<model.dimension; ++dim) model.init_positions[i*model.dimension + dim] = box_uniform(twister);
+        for (size_t dim=0; dim<model.dimension; ++dim) model.init_positions[i][dim] = box_uniform(twister);
     }
 
     model.positions = model.init_positions;
@@ -157,7 +157,7 @@ inline void simulation:: set_initial_velocities(){
     std:: normal_distribution<> normal{0, sqrt(1/beta)};
     
     for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<model.dimension; ++dim) model.velocities[i*model.dimension + dim] = normal(twister);
+        for (size_t dim=0; dim<model.dimension; ++dim) model.velocities[i][dim] = normal(twister);
     }
 
 }
@@ -335,6 +335,7 @@ inline void simulation:: run(){
 
     // Set positions.
     if (init_mode == "uniform") set_initial_position(seed);
+
     // else if (init_mode == "grid") set_initial_position();
 
     const std:: vector <coordinate> init_positions {model.positions};  // Needed for MSD computation.
@@ -344,7 +345,6 @@ inline void simulation:: run(){
 
     // Seed RNG for simulation.
     twister.seed(seed);
-
     // Set forces.
     compute_force_par();
 
