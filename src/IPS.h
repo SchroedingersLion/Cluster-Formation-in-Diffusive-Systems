@@ -2,6 +2,7 @@
 #define IPS_H
 
 #include "argparser.h"
+#include "coordinate.h"
 #include "model.h"
 #include "measurement.h"
 #include "simulation.h"
