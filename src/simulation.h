@@ -289,7 +289,7 @@ inline void simulation:: apply_periodic_boundaries(){
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
             pos = model.positions[i][dim];
-            model.positions[i*model.dimension + dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
+            model.positions[i][dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
         }
 }
 
@@ -335,7 +335,6 @@ inline void simulation:: run(){
 
     // Set positions.
     if (init_mode == "uniform") set_initial_position(seed);
-    std::cout<<"reached here"<<std::endl;
 
     // else if (init_mode == "grid") set_initial_position();
 
@@ -346,6 +345,7 @@ inline void simulation:: run(){
 
     // Seed RNG for simulation.
     twister.seed(seed);
+
     // Set forces.
     compute_force_par();
 
@@ -360,6 +360,8 @@ inline void simulation:: run(){
         if (i % N_meas == 0) meas.take_measurement();
 
         (this->*integrator_step)();
+        std::cout<<"reached here"<<std::endl;
+
 
         if (i%1000==0) std:: cout << "Iteration "<<i<< " done!" << std:: endl;
 
