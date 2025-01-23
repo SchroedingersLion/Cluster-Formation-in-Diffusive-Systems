@@ -40,7 +40,7 @@ class IPS_model {
                             << "Forcefield: " << forcefield << std:: endl;
 
                 // Resize vectors.
-                // resize_vectors();
+                resize_vectors();
 
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
@@ -54,7 +54,7 @@ class IPS_model {
 
         const double kappa;             // Interaction potential prefactor (see paper).
         const std:: string forcefield;  // Specifies interaction potential.
-        // void resize_vectors();
+        void resize_vectors();
         
         // ########## FORCES ###############################################################################################################        
         // Gaussian potential.
@@ -75,14 +75,14 @@ class IPS_model {
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
-// inline void IPS_model:: resize_vectors(){
+inline void IPS_model:: resize_vectors(){
 
-//     positions.resize(N_particles*dimension);
-//     init_positions.resize(N_particles*dimension);
-//     velocities.resize(N_particles*dimension);
-//     forces.resize(N_particles*dimension);
+    positions.resize(N_particles, coordinate(dimension));
+    init_positions.resize(N_particles, coordinate(dimension));
+    velocities.resize(N_particles, coordinate(dimension));
+    forces.resize(N_particles, coordinate(dimension));
 
-// }
+}
 
 
 inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, coordinate& distances){

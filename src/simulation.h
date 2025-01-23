@@ -335,6 +335,7 @@ inline void simulation:: run(){
 
     // Set positions.
     if (init_mode == "uniform") set_initial_position(seed);
+    std::cout<<"reached here"<<std::endl;
 
     // else if (init_mode == "grid") set_initial_position();
 
