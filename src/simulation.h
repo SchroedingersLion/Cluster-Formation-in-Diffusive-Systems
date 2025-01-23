@@ -182,8 +182,8 @@ inline void simulation:: compute_force_par()
                 std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
                 
                 for (size_t dim = 0; dim<model.dimension; ++dim){
-                    forces_for_this_task[i*model.dimension + dim] += force_ij[dim];
-                    forces_for_this_task[j*model.dimension + dim] += -force_ij[dim];
+                    forces_for_this_task[i][dim] += force_ij[dim];
+                    forces_for_this_task[j][dim] += -force_ij[dim];
                 }
 
             }
@@ -191,11 +191,11 @@ inline void simulation:: compute_force_par()
     }
 
         // Sum all of the task-specific forces into the output parameter.
-    std:: fill(model.forces.begin(), model.forces.end(), 0.0);
+    std:: fill(model.forces.begin(), model.forces.end(), coordinate(model.dim));
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
         for (int i = 0; i < model.N_particles; ++i)
             for (size_t dim = 0; dim<model.dimension; ++dim){
-                model.forces[i*model.dimension + dim] += forces_for_specific_task[i*model.dimension + dim];
+                model.forces[i][dim] += forces_for_specific_task[i][dim];
             }
 
 }
