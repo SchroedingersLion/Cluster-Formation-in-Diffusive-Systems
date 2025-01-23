@@ -1,12 +1,15 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include "coordinate.h"
+
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <string>
 #include <iomanip>
+
 
 
 
@@ -20,9 +23,9 @@ class IPS_model {
         const double L;                // Box volume = [-L,L]^2.
         const int N_particles;         // No. of particles.
         const size_t dimension;
-        std:: vector <double> positions, init_positions, velocities, forces;
-        void (IPS_model::* get_force_ij) (const std:: vector <double>&, std:: vector <double>&); // Points to interaction function between two particles.
-        void get_distances_ij(const size_t i, const size_t j, std:: vector<double>& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
+        coordinate positions, init_positions, velocities, forces;
+        void (IPS_model::* get_force_ij) (const coordinate&, coordinate&); // Points to interaction function between two particles.
+        void get_distances_ij(const size_t i, const size_t j, coordinate& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
 
         // CONSTRUCTOR.
         IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield, const size_t dimension)
@@ -37,7 +40,7 @@ class IPS_model {
                             << "Forcefield: " << forcefield << std:: endl;
 
                 // Resize vectors.
-                resize_vectors();
+                // resize_vectors();
 
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
@@ -51,11 +54,11 @@ class IPS_model {
 
         const double kappa;             // Interaction potential prefactor (see paper).
         const std:: string forcefield;  // Specifies interaction potential.
-        void resize_vectors();
+        // void resize_vectors();
         
         // ########## FORCES ###############################################################################################################        
         // Gaussian potential.
-        void get_force_ij_gauss(const std:: vector <double>& distance, std:: vector<double>& force_ij);            // Gauss interaction function.
+        void get_force_ij_gauss(const coordinate& distance, coordinate& force_ij);            // Gauss interaction function.
 
         // Morse potential.
         // coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
@@ -72,17 +75,17 @@ class IPS_model {
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
-inline void IPS_model:: resize_vectors(){
+// inline void IPS_model:: resize_vectors(){
 
-    positions.resize(N_particles*dimension);
-    init_positions.resize(N_particles*dimension);
-    velocities.resize(N_particles*dimension);
-    forces.resize(N_particles*dimension);
+//     positions.resize(N_particles*dimension);
+//     init_positions.resize(N_particles*dimension);
+//     velocities.resize(N_particles*dimension);
+//     forces.resize(N_particles*dimension);
 
-}
+// }
 
 
-inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, std:: vector<double>& distances){
+inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, coordinate& distances){
 
     const double two_L {2*L};
     double dx;
@@ -100,7 +103,7 @@ inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, std:: v
 
 // Gaussian potential.
 const double sigma_2_gauss {0.5}; // sigma^2.
-inline void IPS_model:: get_force_ij_gauss(const std:: vector <double>& distance, std:: vector<double>& force_ij){
+inline void IPS_model:: get_force_ij_gauss(const coordinate& distance, coordinate& force_ij){
 
     
     double dist_sq {0};
@@ -192,4 +195,4 @@ inline void IPS_model:: get_force_ij_gauss(const std:: vector <double>& distance
 // ########### END OF MEMBER DEFINITIONS ##############################################
 
 
-#endif // MODEL
+#endif // MODEL_H

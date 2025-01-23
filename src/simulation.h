@@ -5,6 +5,7 @@
 
 #include "model.h"
 #include "measurement.h"
+#include "coordinate.h"
 
 #include <omp.h>
 #include <random>
