@@ -71,7 +71,7 @@ class simulation {
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
-                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate()));
+                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate(model.dimension)));
 
             }; 
 
@@ -191,7 +191,7 @@ inline void simulation:: compute_force_par()
     }
 
         // Sum all of the task-specific forces into the output parameter.
-    std:: fill(model.forces.begin(), model.forces.end(), coordinate(model.dim));
+    std:: fill(model.forces.begin(), model.forces.end(), coordinate(model.dimension));
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
         for (int i = 0; i < model.N_particles; ++i)
             for (size_t dim = 0; dim<model.dimension; ++dim){
@@ -206,7 +206,7 @@ inline void simulation:: A_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            model.positions[i*model.dimension + dim] += h*model.velocities[i*model.dimension + dim];
+            model.positions[i][dim] += h*model.velocities[i][dim];
         }
 
 }
@@ -217,7 +217,7 @@ inline void simulation:: B_step(const double h){
     
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            model.velocities[i*model.dimension + dim] += h*model.forces[i*model.dimension + dim];
+            model.velocities[i][dim] += h*model.forces[i][dim];
         }
 
 }
@@ -232,7 +232,7 @@ inline void simulation:: O_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            model.velocities[i*model.dimension + dim] = a*model.velocities[i*model.dimension + dim] + pref*normal(twister); 
+            model.velocities[i][dim] = a*model.velocities[i][dim] + pref*normal(twister); 
         }
 
 }
@@ -288,7 +288,7 @@ inline void simulation:: apply_periodic_boundaries(){
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<model.dimension; ++dim){
-            pos = model.positions[i*model.dimension + dim];
+            pos = model.positions[i][dim];
             model.positions[i*model.dimension + dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
         }
 }
@@ -337,7 +337,7 @@ inline void simulation:: run(){
     if (init_mode == "uniform") set_initial_position(seed);
     // else if (init_mode == "grid") set_initial_position();
 
-    const std:: vector <std:: vector <double> > init_positions {model.positions};  // Needed for MSD computation.
+    const std:: vector <coordinate> init_positions {model.positions};  // Needed for MSD computation.
 
     // std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
     set_initial_velocities();
