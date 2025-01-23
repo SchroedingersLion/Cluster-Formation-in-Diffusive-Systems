@@ -89,7 +89,7 @@ class simulation {
         const int N_iter;
         const int N_meas;
         const int THREADS;
-        std:: vector <std:: vector <double>> forces_for_all_tasks;
+        std:: vector <std:: vector <coordinate>> forces_for_all_tasks;
         const std:: string integrator;  
         const std:: string init_mode;
         const int seed;

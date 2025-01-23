@@ -23,7 +23,7 @@ class IPS_model {
         const double L;                // Box volume = [-L,L]^2.
         const int N_particles;         // No. of particles.
         const size_t dimension;
-        coordinate positions, init_positions, velocities, forces;
+        std:: vector <coordinate> positions, init_positions, velocities, forces;
         void (IPS_model::* get_force_ij) (const coordinate&, coordinate&); // Points to interaction function between two particles.
         void get_distances_ij(const size_t i, const size_t j, coordinate& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
 
@@ -91,7 +91,7 @@ inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, coordin
     double dx;
 
     for (size_t dim = 0; dim<dimension; ++dim){
-        dx = positions[i*dimension + dim] - positions[j*dimension + dim];
+        dx = positions[i][dim] - positions[j][dim];
         dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
         distances[dim] = dx;
     }
