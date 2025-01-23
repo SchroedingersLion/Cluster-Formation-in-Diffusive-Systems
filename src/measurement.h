@@ -1,6 +1,9 @@
 #ifndef MEASUREMENT_H
 #define MEASUREMENT_H
 
+#include "model.h"
+#include "coordinate.h"
+
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <vector>
@@ -9,7 +12,6 @@
 #include <string>
 #include <iomanip>
 
-#include "model.h"
 
 
 
@@ -78,7 +80,7 @@ class measurement {
         int k {0};                                     // Current index of results array to store measurements in.
         
         bool trajectory;    // If true, trajectory will stored and printed to file.
-        std:: vector <std:: vector <double>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
+        std:: vector <std:: vector <coordinate>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
         
         std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
@@ -112,12 +114,12 @@ inline float measurement:: get_center_of_mass_distance(){
     const double two_L {2*model.L};
     const double pref {2*M_PI/two_L};
     const double pref2 {1/pref};
-    std:: vector<double> center_of_mass(model.dimension), xi(model.dimension), zeta(model.dimension), theta(model.dimension);
+    coordinate center_of_mass(model.dimension), xi(model.dimension), zeta(model.dimension), theta(model.dimension);
 
     for (size_t n=0; n<model.N_particles; ++n){
         for (size_t dim=0; dim<model.dimension; ++dim){
         
-            theta[dim] = pref*model.positions[n*model.dimension+dim];
+            theta[dim] = pref*model.positions[n][dim];
             xi[dim] += cos(theta[dim]);
             zeta[dim] += sin(theta[dim]);
 
@@ -133,12 +135,12 @@ inline float measurement:: get_center_of_mass_distance(){
 
     // Compute distance to COM.
     float dist {0};
-    std:: vector <double> dist_dim(model.dimension);
+    coordinate dist_dim(model.dimension);
     double sum;
     for (size_t n=0; n<model.N_particles; ++n){
         sum = 0;
         for (size_t dim=0; dim<model.dimension; ++dim){
-            dist_dim[dim] = model.positions[n*model.dimension+dim] - center_of_mass[dim];
+            dist_dim[dim] = model.positions[n][dim] - center_of_mass[dim];
 
             if (dist_dim[dim] > model.L)       dist_dim[dim] -= two_L;  // periodic boundaries.
             else if (dist_dim[dim] < -model.L) dist_dim[dim] += two_L;
@@ -156,14 +158,14 @@ inline float measurement:: get_center_of_mass_distance(){
 
 inline float measurement:: get_msd(){
     
-    std:: vector<double> diff(model.dimension);
+    coordinate diff(model.dimension);
     double msd {0}, two_L {2*model.L};
 
     for(int i=0; i<model.N_particles; ++i){
         
         for (size_t dim=0; dim<model.dimension; ++dim){
 
-            diff[dim] = model.positions[i*model.dimension+dim] - model.init_positions[i*model.dimension+dim];
+            diff[dim] = model.positions[i][dim] - model.init_positions[i][dim];
 
             if (diff[dim] > model.L)         diff[dim] -= two_L;
             else if (diff[dim] < -model.L)   diff[dim] += two_L;
@@ -172,7 +174,7 @@ inline float measurement:: get_msd(){
         }
     }
 
-    return 1./model.positions.size() * msd;
+    return 1./model.N_particles * msd;
 }
 
 
@@ -184,7 +186,7 @@ inline float measurement:: get_Tkin(){
 
     for(int i=0; i<model.N_particles; ++i){
         for (size_t dim=0; dim<model.dimension; ++dim){
-            v = model.velocities[i*model.dimension+dim];
+            v = model.velocities[i][dim];
             Tkin += v*v;
         }
     }
@@ -249,7 +251,7 @@ inline void measurement:: print_results(const std:: string outputname){
                 for ( size_t j=0; j<model.N_particles; ++j ){
                     traj_file << time;
                     for (size_t dim=0; dim<model.dimension; ++dim){
-                    traj_file << " " << trajectory_buffer[i][j*model.dimension+dim];
+                    traj_file << " " << trajectory_buffer[i][j][dim];
                     }
                     traj_file << "\n";  
                 }
