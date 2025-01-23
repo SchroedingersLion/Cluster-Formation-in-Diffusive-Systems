@@ -71,7 +71,7 @@ class simulation {
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
-                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <double> (model.N_particles*model.dimension));
+                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate()));
 
             }; 
 
@@ -169,8 +169,8 @@ inline void simulation:: compute_force_par()
 
     #pragma omp parallel num_threads(THREADS)
     {
-        thread_local std::vector<double> distance(model.dimension);
-        thread_local std::vector<double> force_ij(model.dimension);
+        thread_local coordinate distance(model.dimension);
+        thread_local coordinate force_ij(model.dimension);
 
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < model.N_particles; ++i) {
@@ -179,7 +179,7 @@ inline void simulation:: compute_force_par()
                 model.get_distances_ij(i, j, distance);
                 (model.*(model.get_force_ij))(distance, force_ij);
 
-                std:: vector <double>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+                std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
                 
                 for (size_t dim = 0; dim<model.dimension; ++dim){
                     forces_for_this_task[i*model.dimension + dim] += force_ij[dim];
