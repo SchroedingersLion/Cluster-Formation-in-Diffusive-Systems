@@ -167,6 +167,9 @@ inline void simulation:: set_initial_velocities(){
 inline void simulation:: compute_force_par()
 {
 
+    for (auto& forces_for_specific_task : forces_for_all_tasks)
+        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{model.dimension});
+
     #pragma omp parallel num_threads(THREADS)
     {
         thread_local coordinate distance(model.dimension);
