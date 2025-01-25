@@ -33,16 +33,16 @@ class coordinate {
 
         // Access operator for reading/writing within the runtime dimension.
         double& operator[](size_t index) {
-            if (index >= dimension) {
-                throw std::out_of_range("Index exceeds runtime dimension.");
-            }
+            // if (index >= dimension) {
+            //     throw std::out_of_range("Index exceeds runtime dimension.");
+            // }
             return coords[index];
         }
 
         const double& operator[](size_t index) const {
-            if (index >= dimension) {
-                throw std::out_of_range("Index exceeds runtime dimension.");
-            }
+            // if (index >= dimension) {
+            //     throw std::out_of_range("Index exceeds runtime dimension.");
+            // }
             return coords[index];
         }
 
