@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-constexpr size_t MAXDIM = 3; // Maximum allowed dimension.
+constexpr size_t MAXDIM = 1; // Maximum allowed dimension.
 
 class coordinate {
 
