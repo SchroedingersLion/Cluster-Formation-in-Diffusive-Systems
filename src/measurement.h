@@ -49,7 +49,7 @@ class measurement {
             
             };
 
-
+        measurement(){};
 
         void take_measurement(){
 

@@ -27,6 +27,8 @@ class IPS_model {
         void (IPS_model::* get_force_ij) (const coordinate<DIMENSION>&, coordinate<DIMENSION>&); // Points to interaction function between two particles.
         void get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
 
+        IPS_model(){};
+
         // CONSTRUCTOR.
         IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield)
                 : N_particles {N_particles}, 
