@@ -14,7 +14,7 @@
 
 
 // ###################### Model CLASS DEFINITION ##################################################################################
-
+template <size_t DIMENSION>
 class IPS_model {
 
     public: 
@@ -23,17 +23,16 @@ class IPS_model {
         const double L;                // Box volume = [-L,L]^2.
         const int N_particles;         // No. of particles.
         const size_t dimension;
-        std:: vector <coordinate> positions, init_positions, velocities, forces;
-        void (IPS_model::* get_force_ij) (const coordinate&, coordinate&); // Points to interaction function between two particles.
-        void get_distances_ij(const size_t i, const size_t j, coordinate& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
+        std:: vector <coordinate<DIMENSION>> positions, init_positions, velocities, forces;
+        void (IPS_model::* get_force_ij) (const coordinate<DIMENSION>&, coordinate<DIMENSION>&); // Points to interaction function between two particles.
+        void get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
 
         // CONSTRUCTOR.
-        IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield, const size_t dimension)
+        IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield)
                 : N_particles {N_particles}, 
                   L {boxlength/2}, 
                   kappa {1./N_particles}, 
                   forcefield {forcefield},
-                  dimension {dimension} 
             {
 
                 std:: cout  << "Building IPS model with boxlength " << boxlength << " and " << N_particles << " particles.\n"
@@ -58,7 +57,7 @@ class IPS_model {
         
         // ########## FORCES ###############################################################################################################        
         // Gaussian potential.
-        void get_force_ij_gauss(const coordinate& distance, coordinate& force_ij);            // Gauss interaction function.
+        void get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // Gauss interaction function.
 
         // Morse potential.
         // coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
@@ -75,22 +74,23 @@ class IPS_model {
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
-inline void IPS_model:: resize_vectors(){
+template <size_t DIMENSION>
+inline void IPS_model<DIMENSION>:: resize_vectors(){
 
-    positions.resize(N_particles, coordinate(dimension));
-    init_positions.resize(N_particles, coordinate(dimension));
-    velocities.resize(N_particles, coordinate(dimension));
-    forces.resize(N_particles, coordinate(dimension));
+    positions.resize(N_particles, coordinate<DIMENSION>());
+    init_positions.resize(N_particles, coordinate<DIMENSION>());
+    velocities.resize(N_particles, coordinate<DIMENSION>());
+    forces.resize(N_particles, coordinate<DIMENSION>());
 
 }
 
-
-inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, coordinate& distances){
+template <size_t DIMENSION>
+inline void IPS_model<DIMENSION>:: get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances){
 
     const double two_L {2*L};
     double dx;
 
-    for (size_t dim = 0; dim<dimension; ++dim){
+    for (size_t dim = 0; dim<DIMENSION; ++dim){
         dx = positions[i][dim] - positions[j][dim];
         dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
         distances[dim] = dx;
@@ -103,16 +103,17 @@ inline void IPS_model:: get_distances_ij(const size_t i, const size_t j, coordin
 
 // Gaussian potential.
 const double sigma_2_gauss {0.5}; // sigma^2.
-inline void IPS_model:: get_force_ij_gauss(const coordinate& distance, coordinate& force_ij){
+template <size_t DIMENSION>
+inline void IPS_model<DIMENSION>:: get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij){
 
     
     double dist_sq {0};
-    for (size_t dim = 0; dim<dimension; ++dim) dist_sq += distance[dim]*distance[dim];
+    for (size_t dim = 0; dim<DIMENSION; ++dim) dist_sq += distance[dim]*distance[dim];
 
     const double pref {-kappa/(sigma_2_gauss)};
     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
-    for (size_t dim = 0; dim<dimension; ++dim) force_ij[dim] = expo_term*distance[dim];
+    for (size_t dim = 0; dim<DIMENSION; ++dim) force_ij[dim] = expo_term*distance[dim];
 
     return;
 
