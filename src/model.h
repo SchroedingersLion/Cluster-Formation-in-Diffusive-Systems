@@ -22,15 +22,14 @@ class IPS_model {
         // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES
         const double L;                // Box volume = [-L,L]^2.
         const int N_particles;         // No. of particles.
-        const size_t dimension;
         std:: vector <coordinate<DIMENSION>> positions, init_positions, velocities, forces;
         void (IPS_model::* get_force_ij) (const coordinate<DIMENSION>&, coordinate<DIMENSION>&); // Points to interaction function between two particles.
         void get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
 
-        IPS_model(){};
+        IPS_model<DIMENSION>(){};
 
         // CONSTRUCTOR.
-        IPS_model(const int N_particles, const double boxlength, const std:: string& forcefield)
+        IPS_model<DIMENSION>(const int N_particles, const double boxlength, const std:: string& forcefield)
                 : N_particles {N_particles}, 
                   L {boxlength/2}, 
                   kappa {1./N_particles}, 

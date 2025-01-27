@@ -22,7 +22,7 @@ class measurement {
     public:
 
         // CONSTRUCTOR.
-        measurement(const IPS_model<DIMENSION>& model, int N_meas, const int N_iter, const double stepsize, const bool trajectory)
+        measurement<DIMENSION>(const IPS_model<DIMENSION>& model, int N_meas, const int N_iter, const double stepsize, const bool trajectory)
             : model {model}, N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}, trajectory {trajectory}
             {
                 
@@ -49,7 +49,7 @@ class measurement {
             
             };
 
-        measurement(){};
+        measurement<DIMENSION>(){};
 
         void take_measurement(){
 
@@ -233,33 +233,30 @@ inline void measurement<DIMENSION>:: print_results(const std:: string outputname
 
     // Write trajectory if needed.
     if (trajectory){
-        if (model.dimension<=3){
-            std:: cout << "Writing trajectory...\n";
-            std:: ofstream traj_file {outputname+"_trajectory"};
-            
-            // Write header with specified column names.
-            traj_file << "Time";
-            for (size_t dim=0; dim<DIMENSION; ++dim) traj_file << " dim" + std::to_string(dim+1);
-            traj_file << "\n";
+        std:: cout << "Writing trajectory...\n";
+        std:: ofstream traj_file {outputname+"_trajectory"};
+        
+        // Write header with specified column names.
+        traj_file << "Time";
+        for (size_t dim=0; dim<DIMENSION; ++dim) traj_file << " dim" + std::to_string(dim+1);
+        traj_file << "\n";
 
-            // Write times and positions.
-            
-            double time;
-            for ( size_t i=0; i<trajectory_buffer.size(); ++i )
-            {
-                time =  i*N_meas*stepsize;
-                for ( size_t j=0; j<model.N_particles; ++j ){
-                    traj_file << time;
-                    for (size_t dim=0; dim<DIMENSION; ++dim){
-                    traj_file << " " << trajectory_buffer[i][j][dim];
-                    }
-                    traj_file << "\n";  
+        // Write times and positions.
+        
+        double time;
+        for ( size_t i=0; i<trajectory_buffer.size(); ++i )
+        {
+            time =  i*N_meas*stepsize;
+            for ( size_t j=0; j<model.N_particles; ++j ){
+                traj_file << time;
+                for (size_t dim=0; dim<DIMENSION; ++dim){
+                traj_file << " " << trajectory_buffer[i][j][dim];
                 }
+                traj_file << "\n";  
             }
-
-            traj_file.close();
         }
-        else std:: cout << "WARNING: Trajectory won't be printed for dimension higher than 3\n";
+
+        traj_file.close();
 
     }
 }

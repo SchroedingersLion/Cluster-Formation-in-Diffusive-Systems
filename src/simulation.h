@@ -27,7 +27,7 @@ class simulation {
         measurement<DIMENSION> meas;  // Needs to be public because main calls print function.
 
         // CONSTRUCTOR.
-        simulation<DIMENSION> (IPS_model& model, 
+        simulation<DIMENSION> (IPS_model<DIMENSION>& model, 
                     const double stepsize, 
                     const double beta, 
                     const double gamma, 
@@ -172,8 +172,8 @@ inline void simulation<DIMENSION>:: compute_force_par()
 
     #pragma omp parallel num_threads(THREADS)
     {
-        thread_local coordinate <DIMENSION> distance();
-        thread_local coordinate <DIMENSION> force_ij();
+        thread_local coordinate <DIMENSION> distance;
+        thread_local coordinate <DIMENSION> force_ij;
 
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < model.N_particles; ++i) {
