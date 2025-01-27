@@ -19,7 +19,7 @@
 
 
 // ###################### SIMULATION CLASS DEFINITION ##################################################
-
+template <size_t DIMENSION>
 class simulation {
 
     public: 
@@ -27,7 +27,7 @@ class simulation {
         measurement meas;  // Needs to be public because main calls print function.
 
         // CONSTRUCTOR.
-        simulation (IPS_model& model, 
+        simulation<DIMENSION> (IPS_model& model, 
                     const double stepsize, 
                     const double beta, 
                     const double gamma, 
@@ -62,7 +62,7 @@ class simulation {
                            << "Taking a measurement any " << N_meas << " steps.\n" << std:: endl;
 
                 // Specify integrator.
-                if (integrator=="BAOAB") integrator_step = &simulation:: BAOAB_step;
+                if (integrator=="BAOAB") integrator_step = &simulation<DIMENSION>:: BAOAB_step;
                 // else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
                 else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'BAOAB' and 'UBU'." );
 
@@ -71,7 +71,7 @@ class simulation {
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
-                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate> (model.N_particles, coordinate(model.dimension)));
+                std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate<DIMENSION>> (model.N_particles, coordinate<DIMENSION>()));
 
             }; 
 
@@ -82,18 +82,18 @@ class simulation {
     private:
         
         std:: mt19937 twister;
-        IPS_model& model;
+        IPS_model<DIMENSION>& model;
         const double stepsize;
         const double beta;
         const double gamma;
         const int N_iter;
         const int N_meas;
         const int THREADS;
-        std:: vector <std:: vector <coordinate>> forces_for_all_tasks;
+        std:: vector <std:: vector <coordinate<DIMENSION>>> forces_for_all_tasks;
         const std:: string integrator;  
         const std:: string init_mode;
         const int seed;
-        void (simulation::* integrator_step)();
+        void (simulation<DIMENSION>::* integrator_step)();
         void compute_force_par();
         void A_step(const double h);
         void B_step(const double h);
@@ -134,14 +134,14 @@ class simulation {
 // }
 
 
-
-inline void simulation:: set_initial_position(const int seed){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: set_initial_position(const int seed){
     // Uniform initialization.
 
     twister.seed(seed);
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
     for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<model.dimension; ++dim) model.init_positions[i][dim] = box_uniform(twister);
+        for (size_t dim=0; dim<DIMENSION; ++dim) model.init_positions[i][dim] = box_uniform(twister);
     }
 
     model.positions = model.init_positions;
@@ -149,31 +149,31 @@ inline void simulation:: set_initial_position(const int seed){
 }
 
 
-
-inline void simulation:: set_initial_velocities(){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: set_initial_velocities(){
     // Gaussian initialization.
 
     twister.seed(seed);
     std:: normal_distribution<> normal{0, sqrt(1/beta)};
     
     for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<model.dimension; ++dim) model.velocities[i][dim] = normal(twister);
+        for (size_t dim=0; dim<DIMENSION; ++dim) model.velocities[i][dim] = normal(twister);
     }
 
 }
 
 
-
-inline void simulation:: compute_force_par()
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: compute_force_par()
 {
 
     for (auto& forces_for_specific_task : forces_for_all_tasks)
-        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate{model.dimension});
+        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate<DIMENSION>());
 
     #pragma omp parallel num_threads(THREADS)
     {
-        thread_local coordinate distance(model.dimension);
-        thread_local coordinate force_ij(model.dimension);
+        thread_local coordinate <DIMENSION> distance();
+        thread_local coordinate <DIMENSION> force_ij();
 
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < model.N_particles; ++i) {
@@ -182,9 +182,9 @@ inline void simulation:: compute_force_par()
                 model.get_distances_ij(i, j, distance);
                 (model.*(model.get_force_ij))(distance, force_ij);
 
-                std:: vector <coordinate>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+                std:: vector <coordinate<DIMENSION>>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
                 
-                for (size_t dim = 0; dim<model.dimension; ++dim){
+                for (size_t dim = 0; dim<DIMENSION; ++dim){
                     forces_for_this_task[i][dim] += force_ij[dim];
                     forces_for_this_task[j][dim] += -force_ij[dim];
                 }
@@ -194,47 +194,47 @@ inline void simulation:: compute_force_par()
     }
 
         // Sum all of the task-specific forces into the output parameter.
-    std:: fill(model.forces.begin(), model.forces.end(), coordinate(model.dimension));
+    std:: fill(model.forces.begin(), model.forces.end(), coordinate<DIMENSION>());
     for (auto const& forces_for_specific_task : forces_for_all_tasks)
         for (int i = 0; i < model.N_particles; ++i)
-            for (size_t dim = 0; dim<model.dimension; ++dim){
+            for (size_t dim = 0; dim<DIMENSION; ++dim){
                 model.forces[i][dim] += forces_for_specific_task[i][dim];
             }
 
 }
 
 
-
-inline void simulation:: A_step(const double h){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: A_step(const double h){
 
     for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<model.dimension; ++dim){
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
             model.positions[i][dim] += h*model.velocities[i][dim];
         }
 
 }
 
 
-
-inline void simulation:: B_step(const double h){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: B_step(const double h){
     
     for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<model.dimension; ++dim){
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
             model.velocities[i][dim] += h*model.forces[i][dim];
         }
 
 }
 
 
-
-inline void simulation:: O_step(const double h){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: O_step(const double h){
 
     std:: normal_distribution<> normal{0,1};
     const double a = exp(-gamma*h);
     const double pref = sqrt(1/beta *(1-a*a));
 
     for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<model.dimension; ++dim){
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
             model.velocities[i][dim] = a*model.velocities[i][dim] + pref*normal(twister); 
         }
 
@@ -282,15 +282,15 @@ inline void simulation:: O_step(const double h){
 // }
 
 
-
-inline void simulation:: apply_periodic_boundaries(){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: apply_periodic_boundaries(){
     
     double pos;
     const double L {model.L};
     const double two_L {2*L};
 
     for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<model.dimension; ++dim){
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
             pos = model.positions[i][dim];
             model.positions[i][dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
         }
@@ -311,8 +311,8 @@ inline void simulation:: apply_periodic_boundaries(){
 // }
 
 
-
-inline void simulation:: BAOAB_step(){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: BAOAB_step(){
 
     const double h_half = stepsize/2;
 
@@ -328,8 +328,8 @@ inline void simulation:: BAOAB_step(){
 }
 
 
-
-inline void simulation:: run(){
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: run(){
 
     std:: cout << "\nRunning simulation...\n";
     //  std::cout<< "Simulation at T/Tcrit="<<T_Tcrit_gauss<<" with gamma="<<gamma<<std::endl;
@@ -341,7 +341,7 @@ inline void simulation:: run(){
 
     // else if (init_mode == "grid") set_initial_position();
 
-    const std:: vector <coordinate> init_positions {model.positions};  // Needed for MSD computation.
+    const std:: vector <coordinate<DIMENSION>> init_positions {model.positions};  // Needed for MSD computation.
 
     // std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
     set_initial_velocities();
