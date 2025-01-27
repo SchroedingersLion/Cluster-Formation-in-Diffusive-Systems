@@ -6,5 +6,6 @@
 #include "model.h"
 #include "measurement.h"
 #include "simulation.h"
+#include <stdexcept>
 
 #endif // IPS_H
