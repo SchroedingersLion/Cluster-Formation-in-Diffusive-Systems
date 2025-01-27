@@ -24,7 +24,7 @@ class simulation {
 
     public: 
 
-        measurement meas;  // Needs to be public because main calls print function.
+        measurement meas<DIMENSION>;  // Needs to be public because main calls print function.
 
         // CONSTRUCTOR.
         simulation<DIMENSION> (IPS_model& model, 

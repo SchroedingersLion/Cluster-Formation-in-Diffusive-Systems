@@ -80,7 +80,7 @@ class measurement {
         int k {0};                                     // Current index of results array to store measurements in.
         
         bool trajectory;    // If true, trajectory will stored and printed to file.
-        std:: vector <std:: vector <coordinate<DIMENSION>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
+        std:: vector <std:: vector <coordinate<DIMENSION>>> trajectory_buffer;  // Stores particle configurations in time (if --trajectory flag is set).
         
         std:: vector <float> times; // Times at which measurements are taken (printed to output file together with results).
 
