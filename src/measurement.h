@@ -125,28 +125,37 @@ inline float measurement:: get_center_of_mass_distance(){
         xi.y += cos(theta.y);
         zeta.y += sin(theta.y);
 
+        theta.z = pref*pos.z;
+        xi.z += cos(theta.z);
+        zeta.z += sin(theta.z);
+
     }
     xi.x *= pref2/model.N_particles;
     xi.y *= pref2/model.N_particles;
+    xi.z *= pref2/model.N_particles;
     zeta.x *= pref2/model.N_particles;
     zeta.y *= pref2/model.N_particles;
+    zeta.z *= pref2/model.N_particles;
 
     center_of_mass.x = pref2 * (atan2(-zeta.x, -xi.x) + M_PI);
     center_of_mass.y = pref2 * (atan2(-zeta.y, -xi.y) + M_PI);
-
+    center_of_mass.z = pref2 * (atan2(-zeta.z, -xi.z) + M_PI);
 
     // Compute distance to COM.
-    float dist {0}, dist_x {0}, dist_y{0};
+    float dist {0}, dist_x {0}, dist_y{0}, dist_z{0};
     for (const auto pos : model.positions){
         dist_x = pos.x - center_of_mass.x;
         dist_y = pos.y - center_of_mass.y;
+        dist_z = pos.z - center_of_mass.z;
 
         if (dist_x > model.L)       dist_x -= two_L;  // periodic boundaries.
         else if (dist_x < -model.L) dist_x += two_L;
         if (dist_y > model.L)       dist_y -= two_L;
         else if (dist_y < -model.L) dist_y += two_L;
-        
-        dist += sqrt(dist_x*dist_x + dist_y*dist_y);
+        if (dist_z > model.L)       dist_z -= two_L;
+        else if (dist_z < -model.L) dist_z += two_L;        
+
+        dist += sqrt(dist_x*dist_x + dist_y*dist_y+ dist_z*dist_z);
 
     }
 
@@ -165,13 +174,16 @@ inline float measurement:: get_msd(){
         
         diff.x = model.positions[i].x - model.init_positions[i].x;
         diff.y = model.positions[i].y - model.init_positions[i].y;
+        diff.z = model.positions[i].z - model.init_positions[i].z;
 
         if (diff.x > model.L)         diff.x -= two_L;
         else if (diff.x < -model.L)   diff.x += two_L;
         if (diff.y > model.L)         diff.y -= two_L;
         else if (diff.y < -model.L)   diff.y += two_L;
+        if (diff.z > model.L)         diff.z -= two_L;
+        else if (diff.z < -model.L)   diff.z += two_L;
 
-        msd += diff.x*diff.x + diff.y*diff.y;
+        msd += diff.x*diff.x + diff.y*diff.y + diff.z*diff.z;
 
     }
 
@@ -185,7 +197,7 @@ inline float measurement:: get_Tkin(){
     double Tkin {0};
 
     for(auto vel : model.velocities){
-        Tkin += vel.x*vel.x + vel.y*vel.y;
+        Tkin += vel.x*vel.x + vel.y*vel.y + vel.z*vel.z;
     }
 
     return Tkin/(2*model.velocities.size());
@@ -244,7 +256,7 @@ inline void measurement:: print_results(const std:: string outputname){
             time =  i*N_meas*stepsize;
             for ( size_t j=0; j<number_particles; ++j )
             {
-                traj_file << time << " " << trajectory_buffer[i][j].x << " " << trajectory_buffer[i][j].y <<  "\n";  
+                traj_file << time << " " << trajectory_buffer[i][j].x << " " << trajectory_buffer[i][j].y << " " << trajectory_buffer[i][j].z <<  "\n";  
             }
         }
 

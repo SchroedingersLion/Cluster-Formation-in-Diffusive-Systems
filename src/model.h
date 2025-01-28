@@ -12,6 +12,7 @@
 struct coordinate{    // Used to denote positions, velocities and forces.
     double x{0};
     double y{0};
+    double z{0};
 };
 
 
@@ -47,7 +48,7 @@ class IPS_model {
 
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
-                else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
+                // else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
                 else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss' and 'morse'." );
 
             }
@@ -63,7 +64,7 @@ class IPS_model {
         // double my_pow(double x, size_t n);  // Help function used in get_force_ij_gauss.
 
         // Morse potential.
-        coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
+        // coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
         //##################################################################################################################################
 
 };
@@ -77,11 +78,13 @@ inline coordinate IPS_model:: get_distances_ij(const size_t i, const size_t j){
 
     double dx {positions[i].x - positions[j].x};
     double dy {positions[i].y - positions[j].y};
+    double dz {positions[i].z - positions[j].z};
 
     dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
     dy = dy > L ? dy - two_L : (dy < -L ? dy + two_L : dy);
+    dz = dz > L ? dz - two_L : (dz < -L ? dz + two_L : dz);
 
-    coordinate distances {dx, dy};
+    coordinate distances {dx, dy, dz};
 
     return distances;
 
@@ -93,12 +96,12 @@ const double sigma_2_gauss {0.5}; // sigma^2.
 inline coordinate IPS_model:: get_force_ij_gauss(const coordinate distance){
 
     
-    const double dist_sq {distance.x*distance.x + distance.y*distance.y};
+    const double dist_sq {distance.x*distance.x + distance.y*distance.y + distance.z*distance.z};
 
     const double pref {-kappa/(sigma_2_gauss)};
     const double expo_term {pref * exp(-dist_sq/(2*sigma_2_gauss))};
 
-    coordinate force_ij {expo_term*distance.x, expo_term*distance.y};
+    coordinate force_ij {expo_term*distance.x, expo_term*distance.y, expo_term*distance.z};
 
     return force_ij;
 
@@ -140,22 +143,22 @@ inline coordinate IPS_model:: get_force_ij_gauss(const coordinate distance){
 
 
 // Morse potential.
-const double a_morse {2};
-const double r_morse {0}; 
-const double D_morse {1};
+// const double a_morse {2};
+// const double r_morse {0}; 
+// const double D_morse {1};
 
-inline coordinate IPS_model:: get_force_ij_morse(const coordinate distance){
+// inline coordinate IPS_model:: get_force_ij_morse(const coordinate distance){
     
-    const double dist {sqrt(distance.x*distance.x + distance.y*distance.y)};
+//     const double dist {sqrt(distance.x*distance.x + distance.y*distance.y)};
 
-    const double expo {exp(-a_morse * (dist-r_morse))}; 
-    const double pref {kappa * 2 * a_morse * D_morse * (expo*expo-expo) / dist};
+//     const double expo {exp(-a_morse * (dist-r_morse))}; 
+//     const double pref {kappa * 2 * a_morse * D_morse * (expo*expo-expo) / dist};
 
-    coordinate force_ij {pref*distance.x, pref*distance.y};
+//     coordinate force_ij {pref*distance.x, pref*distance.y};
 
-    return force_ij;
+//     return force_ij;
 
-}
+// }
 
 // ########### END OF MEMBER DEFINITIONS ##############################################
 
