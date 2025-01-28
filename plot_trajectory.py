@@ -19,7 +19,25 @@ plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
 plt.rc('ytick', labelsize=22) 
 
+
 ### Function to update animation.
+def update_2D(frame, x_coords, y_coords, times, scatterplot, time_text):
+    
+    # for each frame, update the data stored on each artist.
+    x = x_coords[:frame]
+    y = y_coords[:frame]
+
+    for i in range(0,len(x)):
+        xdata = x[i]
+        ydata = y[i]
+        data = np.stack([xdata, ydata]).T
+        scatterplot.set_offsets(data)
+
+    time_text.set_text(f'Time: {times[frame]}')
+
+    return (scatterplot)
+
+
 def update_3D(frame, x_coords, y_coords, z_coords, times, scatterplot, time_text):
     
     # for each frame, update the data stored on each artist.
@@ -160,7 +178,7 @@ elif dimension == 2:
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
     # Plot animation.
-    ani = animation.FuncAnimation(fig=fig, func=update, frames=N_frames, fargs=(x_coords, y_coords, times, scat, time_text), interval=interval)
+    ani = animation.FuncAnimation(fig=fig, func=update_2D, frames=N_frames, fargs=(x_coords, y_coords, times, scat, time_text), interval=interval)
     # Save animation.
     if save_file:
         print("Saving animation...")
