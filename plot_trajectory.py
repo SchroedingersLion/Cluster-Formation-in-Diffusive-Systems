@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 import numpy as np
 import os
@@ -16,9 +17,30 @@ plt.rc('lines', linewidth=4)
 plt.rcParams['axes.titlepad'] = 26
 plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
-#plt.rc('ytick', labelsize=22) 
+plt.rc('ytick', labelsize=22) 
+
+### Function to update animation.
+def update(frame, x_coords, y_coords, z_coords, times, scatterplot, time_text):
+    
+    # for each frame, update the data stored on each artist.
+    x = x_coords[frame]
+    y = y_coords[frame]
+    z = z_coords[frame]
+
+    scatterplot._offsets3d=(x,y,z)
 
 
+    # for i in range(0,len(x)):
+    #     xdata = x[i]
+    #     ydata = y[i]
+    #     zdata = z[i]
+    #     data = np.stack([xdata, ydata, zdata]).T
+    #     scatterplot._offsets3d(data)
+    #     scatterplot.set_offsets(data)
+
+    time_text.set_text(f'Time: {times[frame]}')
+
+    return (scatterplot)
 
 
 # Parse the command-line arguments.
@@ -38,60 +60,64 @@ title = args.title
 save_file = args.save
 fps = args.fps
 
+# filename = "3D_simu.csv_trajectory"
+# interval = 10
+# title = "test 3D simulation"
+# save_file = "save_test.gif"
+# fps = 3
+
 
 # Load trajectory data.
 arr = np.loadtxt(filename, delimiter=" ", skiprows=1) 
 
 # Determine boxsize from coordinates.
-ylim = [np.min(arr[:,1]), np.max(arr[:,1])]
-threshold = (ylim[1]-ylim[0])/2 # Half of the boxsize, used to exclude periodic boundary jumps from plot.
+xlim = [np.min(arr[:,1]), np.max(arr[:,1])]
+ylim = [np.min(arr[:,2]), np.max(arr[:,2])]
+zlim = [np.min(arr[:,3]), np.max(arr[:,3])]
 
 # Create animation window.
-fig, ax = plt.subplots(figsize=(10, 10))
-ax.set(ylim=ylim, xlabel='Time', ylabel='x')
+# fig, ax = plt.subplots(figsize=(10, 10))
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.set(xlim=xlim, ylim=ylim, zlim=zlim)
+ax.set_xlabel('x', labelpad=15)
+ax.set_ylabel('y', labelpad=15)
+ax.set_zlabel('z', labelpad=15)
 ax.set_title(title)
-colors = mpl.cm.tab10.colors
+
+# Configure 3D plot
+ax.set_proj_type('persp')  # Set perspective projection
+ax.grid(True)  # Remove 2D grid
+ax.set_box_aspect([1, 1, 1])  # Ensure the 3D aspect ratio is correct
 
 # Compute number of particles (given by the first row where the time is no longer 0).
 N_part = np.where(arr[:,0]!=0)[0][0]
 
 # Create array of frames.
 N_frames = len(arr)//N_part                      # Number of frames.
-frames = arr.reshape(N_frames, N_part, 2)       
+frames = arr.reshape(N_frames, N_part, 4)       
 
 # Extract coordinates to feed into animation function.
 x_coords = np.zeros((N_frames, N_part))
-
+y_coords = np.zeros((N_frames, N_part))
+z_coords = np.zeros((N_frames, N_part))
 times = np.zeros((N_frames))
 for i in range(0, N_frames):
     x_coords[i,:] = arr[i*N_part : (i+1)*N_part, 1]
+    y_coords[i,:] = arr[i*N_part : (i+1)*N_part, 2]
+    z_coords[i,:] = arr[i*N_part : (i+1)*N_part, 3]
     times[i] = arr[i*N_part, 0]
 
-# Plot particle trajectories one by one.
-for i in range(0, N_part):
+# Create scatter plot for animation function.
+scat = ax.scatter(x_coords[0], y_coords[0], z_coords[0], c="b", s=5,)
+time_text = ax.text2D(0.05, 0.9, "", transform=ax.transAxes)
 
-    positions = x_coords[:,i]
-
-    # Need to split the data to avoid plotting of jumps caused by periodic boundaries.
-    jumps = np.abs(np.diff(positions)) > threshold
-    # Create segments for continuous plotting
-    segments = []
-    start_idx = 0
-    for k, jump in enumerate(jumps):
-        if jump:  # End current segment at the jump
-            segments.append((times[start_idx:k + 1], positions[start_idx:k + 1]))
-            start_idx = k + 1
-    # Append the last segment
-    segments.append((times[start_idx:], positions[start_idx:]))
-    
-    color = colors[i % len(colors)]
-    for t_seg, p_seg in segments:
-        ax.plot(t_seg, p_seg, color=color)
-
+# Plot animation.
+ani = animation.FuncAnimation(fig=fig, func=update, frames=N_frames, fargs=(x_coords, y_coords, z_coords, times, scat, time_text), interval=interval)
 # Save animation.
-# if save_file:
-#     print("Saving animation...")
-#     ani.save(save_file, writer='ffmpeg', fps=fps)
+if save_file:
+    print("Saving animation...")
+    ani.save(save_file, writer='ffmpeg', fps=fps)
 
 plt.show()
 
