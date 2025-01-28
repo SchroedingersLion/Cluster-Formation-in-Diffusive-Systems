@@ -50,6 +50,26 @@ int main(int argc, char* argv[]){
             break;
         }
 
+        case 3: {
+            IPS_model<3> sys(vals.N_particles, vals.boxlength, vals.forcefield);
+            simulation<3> simu(sys, 
+                    vals.stepsize, 
+                    vals.beta, 
+                    vals.gamma, 
+                    vals.N_iter,
+                    vals.N_meas, 
+                    vals.threads, 
+                    vals.integrator, 
+                    vals.init_mode, 
+                    vals.seed,
+                    vals.trajectory);
+            
+            simu.run();
+            simu.meas.print_results(vals.output_name);
+
+            break;
+        }
+
         default:
             throw std::out_of_range("\nPassed inadmissible dimension argument. Allowed is `1`, `2`, or `3`.\n");
             break;
