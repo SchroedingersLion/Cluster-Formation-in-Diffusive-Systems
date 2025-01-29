@@ -44,8 +44,8 @@ class IPS_model {
 
                 // Specify force field.
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
-                // else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
-                // else if (forcefield=="gem4") get_force_ij = &IPS_model:: get_force_ij_gem4;
+                else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
+                else if (forcefield=="gem4") get_force_ij = &IPS_model:: get_force_ij_gem4;
                 else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss', 'morse', and 'gem4'." );
 
             }
@@ -61,10 +61,10 @@ class IPS_model {
         void get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // Gauss interaction function.
 
         // Morse potential.
-        // coordinate get_force_ij_morse(const coordinate distance);            // Morse interaction function.
+        void get_force_ij_morse(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // Morse interaction function.
 
         // // GEM-4 potential
-        // coordinate get_force_ij_gem4(const coordinate distance);            // GEM-4 interaction function.
+        void get_force_ij_gem4(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // GEM-4 interaction function.
         
         double my_pow(double x, int n); // Help function to compute x^n.
 
@@ -120,79 +120,67 @@ inline void IPS_model<DIMENSION>:: get_force_ij_gauss(const coordinate<DIMENSION
 
 }
 
-// // Gaussian potential.
-// const double sigma_gauss {sqrt(0.5)}; // Sigma.
-// const int alpha_gauss {2};         // Exponent in exponential (==2 for Gauss).
-
-// const double prefactor_gauss {alpha_gauss/pow(sqrt(2)*sigma_gauss, alpha_gauss)};   // Help constants.
-// const double denominator_gauss {sqrt(2)*sigma_gauss};
-
-// inline coordinate IPS_model:: get_force_ij_gauss(const coordinate position_i, const coordinate position_j){
-
-//     const coordinate dist {get_distances_ij(position_i, position_j)};  // Get (dx, dy) tupel.
-    
-//     const double distance {sqrt(dist.x*dist.x + dist.y*dist.y)};
-
-//     const double expo_term {-kappa * prefactor_gauss * my_pow(distance, alpha_gauss-2) * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
-//     // const double expo_term {-kappa * prefactor_gauss  * exp( - my_pow(distance/denominator_gauss, alpha_gauss) )};
-
-
-//     coordinate force_ij {expo_term*dist.x, expo_term*dist.y};
-
-//     return force_ij;
-
-// }
-
 
 // GEM-Alpha potential (reduces to Gaussian for alpha=2, but is less efficient compute-wise).
-// const double sigma_2_gem4 {0.5};
-// const double sqrt_two_sigma_2_gem4 {sqrt(2*sigma_2_gem4)};
-// const int alpha_gem4 {4};
-// const double pref_gem4 {alpha_gem4 / sqrt_two_sigma_2_gem4};
-// inline coordinate IPS_model:: get_force_ij_gem4(const coordinate distance){
+const double sigma_2_gem4 {0.5};
+const double sqrt_two_sigma_2_gem4 {sqrt(2*sigma_2_gem4)};
+const int alpha_gem4 {4};
+const double pref_gem4 {alpha_gem4 / sqrt_two_sigma_2_gem4};
 
-//     const double normed_distance {sqrt(distance.x*distance.x) / sqrt_two_sigma_2_gem4};
-//     const double exponent {my_pow(normed_distance, alpha_gem4)};
+template <size_t DIMENSION>
+inline void IPS_model<DIMENSION>:: get_force_ij_gem4(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij){
 
-//     const double pref {-kappa*pref_gem4*exponent/normed_distance};
-//     const double expo_term {pref * exp(-exponent)};
+    double dist {0};
+    for (size_t dim = 0; dim<DIMENSION; ++dim) dist += distance[dim]*distance[dim];
+    dist = sqrt(dist);
 
-//     coordinate force_ij {distance.x > 0 ? expo_term : -expo_term};
+    const double normed_distance {dist/ sqrt_two_sigma_2_gem4};
+    const double exponent {my_pow(normed_distance, alpha_gem4)};
 
-//     return force_ij;
-
-// }
-
-
-// inline double IPS_model:: my_pow(double x, int n){
-//     double r = 1.0;
-
-//     while(n > 0){
-//         r *= x;
-//         --n;
-//     }
-
-//     return r;
-// }
-
-
-// // Morse potential.
-// const double a_morse {2};
-// const double r_morse {0}; 
-// const double D_morse {1};
-
-// inline coordinate IPS_model:: get_force_ij_morse(const coordinate distance){
+    const double pref {-kappa*pref_gem4*exponent/normed_distance};
+    const double expo_term {pref * exp(-exponent)};
     
-//     const double dist {sqrt(distance.x*distance.x)};
+    for (size_t dim = 0; dim<DIMENSION; ++dim) force_ij[dim] =  distance[dim] > 0 ? expo_term : -expo_term;
+    
 
-//     const double expo {exp(-a_morse * (dist-r_morse))}; 
-//     const double pref {kappa * 2* a_morse * D_morse * (expo*expo-expo) / dist};
+    return;
 
-//     coordinate force_ij {pref*distance.x};
+}
 
-//     return force_ij;
+template <size_t DIMENSION>
+inline double IPS_model<DIMENSION>:: my_pow(double x, int n){
+    double r = 1.0;
 
-// }
+    while(n > 0){
+        r *= x;
+        --n;
+    }
+
+    return r;
+}
+
+
+
+// Morse potential.
+const double a_morse {2};
+const double r_morse {0}; 
+const double D_morse {1};
+
+template <size_t DIMENSION>
+inline void IPS_model<DIMENSION>:: get_force_ij_morse(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij){
+    
+    double dist {0};
+    for (size_t dim = 0; dim<DIMENSION; ++dim) dist += distance[dim]*distance[dim];
+    dist = sqrt(dist);
+
+    const double expo {exp(-a_morse * (dist-r_morse))}; 
+    const double pref {kappa * 2* a_morse * D_morse * (expo*expo-expo) / dist};
+
+    for (size_t dim = 0; dim<DIMENSION; ++dim) force_ij[dim] =  pref*distance[dim];
+
+    return;
+
+}
 
 // ########### END OF MEMBER DEFINITIONS ##############################################
 
