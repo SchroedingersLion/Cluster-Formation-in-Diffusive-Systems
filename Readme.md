@@ -6,13 +6,13 @@ This repository holds a multithreaded C++ code for the **Sim**ulation of **I**nt
 It holds the source code that can be easily modified, compiled and run, and two simple Python scripts to visualize the results.
 
 ## Introduction
-We study a system of $N$ particles, whose configuration is given by the particle positions $\boldsymbol{x}_i\in \mathbb{R}^d$ and velocities $\boldsymbol{v}_i \in \mathbb{R}^d$, for $i=1,...,N$ and $d\in \{1,2,3\}$. The particles evolve in time $t$ via underdamped Langevin Dynamics, given by
-$$
+We study a system of $N$ particles, whose configuration is given by the particle positions $\boldsymbol{x}_i\in \mathbb{R}^d$ and velocities $\boldsymbol{v}_i \in \mathbb{R}^d$, for $i=1,...,N$ and $d\in \\{1,2,3\\}$. The particles evolve in time $t$ via underdamped Langevin Dynamics, given by
+``` math
 \begin{aligned}
 \text{d}\boldsymbol{x}_i &=  \boldsymbol{v}_i \text{d}t, \\
 \text{d}\boldsymbol{v}_i &= -\frac{1}{N} \sum_{i=j}^{N}\nabla W(\boldsymbol{x}_i, \boldsymbol{x}_j)\text{d}t -  \gamma \boldsymbol{v}_i \text{d}t + \sqrt{2\gamma \beta^{-1}}\text{d}\boldsymbol{B}_t^i,
 \end{aligned}
-$$
+```
 with friction $\gamma \ge 0$, temperature $\beta^{-1} \ge 0$ and a $d$-dimensional standard Wiener process $\boldsymbol{B}^i_t$.
 Each particle pair interacts via interaction potential $W(\boldsymbol{x}, \boldsymbol{y})$, which is purely attractive in our case. For a list of implemented potentials, see below.  
 
