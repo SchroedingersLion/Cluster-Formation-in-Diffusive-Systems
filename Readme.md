@@ -6,7 +6,7 @@ This repository holds a multithreaded C++ code for the **Sim**ulation of **I**nt
 It holds the source code that can be easily modified, compiled and run, and two simple Python scripts to visualize the results.
 
 ## Introduction
-We study a system of $N$ particles, whose configuration is given by the particle positions $\boldsymbol{x}_i\in \mathbb{R}^d$ and velocities $\boldsymbol{v}_i \in \mathbb{R}^d$, for $i=1,...,N$ and $ d\in \{1,2,3\}$. The particles evolve in time $t$ via underdamped Langevin Dynamics, given by
+We study a system of $N$ particles, whose configuration is given by the particle positions $\boldsymbol{x}_i\in \mathbb{R}^d$ and velocities $\boldsymbol{v}_i \in \mathbb{R}^d$, for $i=1,...,N$ and $d\in \{1,2,3\}$. The particles evolve in time $t$ via underdamped Langevin Dynamics, given by
 $$
 \begin{aligned}
 \text{d}\boldsymbol{x}_i &=  \boldsymbol{v}_i \text{d}t, \\
