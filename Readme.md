@@ -23,7 +23,7 @@ For temperatures smaller than some critical temperature, i.e., $\beta$ larger th
 
 ## Build From Source
 To create an executable on your platform, download the files in the src folder and compile the `main.cpp` file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`.  
-If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store in your system's include folder (on Linux, this is typically /usr/include). 
+If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). 
 
 ## Quickstart   
 To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `.csv` output file holding time series data of the mean distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin).  
