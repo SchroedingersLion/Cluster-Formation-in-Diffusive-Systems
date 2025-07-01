@@ -15,7 +15,7 @@ const std:: string  _gamma_default {"0.1"};
 const std:: string  _N_iter_default{"10000"};
 const std:: string  _stepsize_default {"0.01"};
 const std:: string  _N_meas_default {"10"};
-const std:: string  _integrator_default {"BAOAB"};
+const std:: string  _integrator_default {"baoab"};
 const std:: string  _threads_default {"4"};
 const std:: string  _seed_default {"1"};
 const std:: string  _output_name_default {"results.csv"};

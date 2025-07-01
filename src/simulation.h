@@ -35,7 +35,7 @@ class simulation {
                     const int N_meas, 
                     const int threads, 
                     const std:: string integrator, 
-                    const std:: string init_mode, 
+                    const std:: string init_conf, 
                     const int seed,
                     const bool trajectory)
                   : model {model}, 
@@ -46,7 +46,7 @@ class simulation {
                     N_meas {N_meas}, 
                     THREADS {threads}, 
                     integrator {integrator}, 
-                    init_mode {init_mode}, 
+                    init_conf {init_conf}, 
                     seed {seed},
                     meas {measurement (model, N_meas, N_iter, stepsize, trajectory)}
             {
@@ -57,7 +57,6 @@ class simulation {
                            << "beta " << beta << ",\n"
                            << N_iter << " iterations.\n"
                            << "Using " << THREADS << " threads for force calculations. \n"
-                           << "Mode of initialization: " << init_mode << ".\n"
                            << "Randomseed " << seed << ".\n"
                            << "Taking a measurement any " << N_meas << " steps.\n" << std:: endl;
 
@@ -88,7 +87,7 @@ class simulation {
         const int THREADS;
         std:: vector <std:: vector <coordinate<DIMENSION>>> forces_for_all_tasks;
         const std:: string integrator;  
-        const std:: string init_mode;
+        const std:: string init_conf;
         const int seed;
         void (simulation<DIMENSION>::* integrator_step)();
         void compute_force_par();
@@ -137,10 +136,11 @@ inline std::vector<std::vector<double>> simulation<DIMENSION>:: read_from_file(c
     /* Read .csv file filename containing unknown number of rows and columns. 
        Each row MUST consist of numbers separated by a single space symbol " ". */
 
-    std::ifstream file(init_conf);
+    std::vector<std::vector<double>> data;
+    std::ifstream file(filename);
     
     if (!file.is_open()) {
-        throw std::runtime_error("Could not open file: " + init_conf);
+        throw std::runtime_error("Could not open file: " + filename);
     }
 
     std::string line;
@@ -163,6 +163,8 @@ inline std::vector<std::vector<double>> simulation<DIMENSION>:: read_from_file(c
             data.push_back(std::move(row));   
         }
     }
+
+    return data;
 }
 
 
@@ -178,17 +180,17 @@ inline void simulation<DIMENSION>:: set_initial_position(const std:: string& ini
     if (N_rows != model.N_particles) throw std::runtime_error( std:: string("Passed number of particles via --N_particles "
                                                                "does not coincide with number of rows in file ") + init_conf + ".");
     for (auto row : data){
-        if (row.size() != DIMENSION) throw std::runtime_error(std:: string("Number of columns in (at least one row) of file ") + init_conf
+        if (row.size() != DIMENSION) throw std::runtime_error(std:: string("Number of columns in (at least one row) of file ") + init_conf +
                                                               " does not coincide with system dimension passed via --dimension.");
     }
 
     double pos;
-    for (int i=0; n<model.N_particles; ++n)
+    for (int i=0; i<model.N_particles; ++i)
         for (int dim=0; dim<DIMENSION; ++dim){
 
             pos = data[i][dim];
             // Check whether read coordinate lies in the simulation box.
-            if (pos > model.L|| pos < -model.L) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf 
+            if (pos > model.L|| pos < -model.L) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf +
                                                                          " does exceed the box boundaries, whose side has length [-L,L] "
                                                                          " where 2L was given via flag --boxlength (default 10, so L=5).");
 
@@ -417,7 +419,7 @@ inline void simulation<DIMENSION>:: run(){
     // Prepare simulation.
 
     // Set positions.
-    if (init_conf) set_initial_position(init_conf); 
+    if (!init_conf.empty() && init_conf != "uniform") set_initial_position(init_conf); 
     else set_initial_position(seed);
 
     set_initial_velocities();
