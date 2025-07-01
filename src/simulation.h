@@ -308,7 +308,8 @@ inline void simulation<DIMENSION>:: O_step(const double h){
     Note: Recreating these constants is somewhat inefficient, but they can't be precomputed 
     if O_step should be callable for different step-widths h, which is the case here.
     Passing h as an argument allows for the usage of the same O_step code for integrators 
-    other than BAOAB (e.g., OBABO) to be added in the future. Need a cleaner way to handle these constants.
+    other than BAOAB (e.g., OBABO) to be added in the future. 
+    Need a cleaner way to handle these constants without using flexibility.
     */
 
     for (int i=0; i<model.N_particles; ++i)
