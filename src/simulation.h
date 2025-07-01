@@ -63,7 +63,7 @@ class simulation {
 
                 // Specify integrator.
                 if (integrator=="BAOAB") integrator_step = &simulation<DIMENSION>:: BAOAB_step;
-                // else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
+                else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
                 else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'BAOAB' and 'UBU'." );
 
                 // Check initialization mode.
@@ -98,12 +98,12 @@ class simulation {
         void A_step(const double h);
         void B_step(const double h);
         void O_step(const double h);
-        std:: normal_distribution<> normal{0,1};
-
-        // void U_step(const double h);
-        void apply_periodic_boundaries();
+        void U_step(const double h);
+        std:: normal_distribution<> normal{0,1};  // Used by O_step & U_step.
         void BAOAB_step();
-        // void UBU_step();
+        void UBU_step();
+        void apply_periodic_boundaries();
+
         // void set_initial_position();
         void set_initial_position(const int seed);
         void set_initial_velocities();
@@ -232,8 +232,15 @@ inline void simulation<DIMENSION>:: B_step(const double h){
 template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: O_step(const double h){
 
+    
     const double a = exp(-gamma*h);
     const double pref = sqrt(1/beta *(1-a*a));
+    /* 
+    Note: Recreating these constants is somewhat inefficient, but they can't be precomputed 
+    if O_step should be callable for different step-widths h, which is the case here.
+    Passing h as an argument allows for the usage of the same O_step code for integrators 
+    other than BAOAB (e.g., OBABO) to be added in the future. Need a cleaner way to handle these constants.
+    */
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<DIMENSION; ++dim){
@@ -243,45 +250,50 @@ inline void simulation<DIMENSION>:: O_step(const double h){
 }
 
 
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: U_step(const double h){
 
-// inline void simulation:: U_step(const double h){
+    // Prefactors used in the U step.
+    const double pref_U1 {exp(-gamma*h)};
+    const double pref_U2 {(1-pref_U1)/gamma};
+    const double pref_U3 {sqrt(2/(beta*gamma))};
+    const double pref_U4 {sqrt(2*gamma/beta)};
+    const double pref_Z1 {sqrt(h)};
+    const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
+    const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
+    const double pref_Z4 {sqrt( 1-2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
+    /* 
+    Note: Recreating these constants is inefficient (see note in O_step function above).
+    */
 
-// 	std:: normal_distribution<> normal{0,1};
-
-//     // Prefactors used in the U step.
-//     const double pref_U1 {exp(-gamma*h)};
-//     const double pref_U2 {(1-pref_U1)/gamma};
-//     const double pref_U3 {sqrt(2/(beta*gamma))};
-//     const double pref_U4 {sqrt(2*gamma/beta)};
-//     const double pref_Z1 {sqrt(h)};
-//     const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
-//     const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
-//     const double pref_Z4 {sqrt( 1-2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
-
-//     const double pref_Z2_total1 {pref_Z2 * pref_Z3};
-//     const double pref_Z2_total2 {pref_Z2 * pref_Z4};
+    const double pref_Z2_total1 {pref_Z2 * pref_Z3};
+    const double pref_Z2_total2 {pref_Z2 * pref_Z4};
 
 
-//     // Compute new positions/velocities.
-//     coordinate Z1, Z2;
-//     coordinate xi1, xi2; 
+    // Compute new positions/velocities.
 
-//     for (int i=0; i<model.N_particles; ++i){
+    double xi1, xi2, Z1, Z2; 
 
-//         xi1.x = normal(twister);
-//         xi2.x = normal(twister);
+    for (int i=0; i<model.N_particles; ++i){
 
-//         Z1.x = pref_Z1 * xi1.x;
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
 
-//         Z2.x = pref_Z2_total1 * xi1.x + pref_Z2_total2 * xi2.x;
+            xi1 = normal(twister);
+            xi2 = normal(twister);
 
-//         model.positions[i].x += pref_U2 * model.velocities[i].x + pref_U3 * (Z1.x - Z2.x);
+            Z1 = pref_Z1 * xi1;
 
-//         model.velocities[i].x = pref_U1 * model.velocities[i].x + pref_U4 * Z2.x;
+            Z2 = pref_Z2_total1 * xi1 + pref_Z2_total2 * xi2;
 
-//     }
+            model.positions[i][dim] += pref_U2 * model.velocities[i][dim] + pref_U3 * (Z1 - Z2);
 
-// }
+            model.velocities[i][dim] = pref_U1 * model.velocities[i][dim] + pref_U4 * Z2;
+        
+        }
+
+    }
+
+}
 
 
 template <size_t DIMENSION>
@@ -299,18 +311,18 @@ inline void simulation<DIMENSION>:: apply_periodic_boundaries(){
 }
 
 
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: UBU_step(){
 
-// inline void simulation:: UBU_step(){
+    const double h_half = stepsize/2;
 
-//     const double h_half = stepsize/2;
+    U_step(h_half);
+    apply_periodic_boundaries();
+    compute_force_par();
+    B_step(stepsize);
+    U_step(h_half);
 
-//     U_step(h_half);
-//     apply_periodic_boundaries();
-//     compute_force_par();
-//     B_step(stepsize);
-//     U_step(h_half);
-
-// }
+}
 
 
 template <size_t DIMENSION>
