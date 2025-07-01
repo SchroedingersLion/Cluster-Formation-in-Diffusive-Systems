@@ -98,6 +98,8 @@ class simulation {
         void A_step(const double h);
         void B_step(const double h);
         void O_step(const double h);
+        std:: normal_distribution<> normal{0,1};
+
         // void U_step(const double h);
         void apply_periodic_boundaries();
         void BAOAB_step();
@@ -172,8 +174,9 @@ inline void simulation<DIMENSION>:: compute_force_par()
 
     #pragma omp parallel num_threads(THREADS)
     {
-        thread_local coordinate <DIMENSION> distance;
-        thread_local coordinate <DIMENSION> force_ij;
+        coordinate <DIMENSION> distance;
+        coordinate <DIMENSION> force_ij;
+
 
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < model.N_particles; ++i) {
@@ -229,7 +232,6 @@ inline void simulation<DIMENSION>:: B_step(const double h){
 template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: O_step(const double h){
 
-    std:: normal_distribution<> normal{0,1};
     const double a = exp(-gamma*h);
     const double pref = sqrt(1/beta *(1-a*a));
 
@@ -332,7 +334,6 @@ template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: run(){
 
     std:: cout << "\nRunning simulation...\n";
-    //  std::cout<< "Simulation at T/Tcrit="<<T_Tcrit_gauss<<" with gamma="<<gamma<<std::endl;
 
     // Prepare simulation.
 
@@ -343,7 +344,6 @@ inline void simulation<DIMENSION>:: run(){
 
     const std:: vector <coordinate<DIMENSION>> init_positions {model.positions};  // Needed for MSD computation.
 
-    // std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
     set_initial_velocities();
 
     // Seed RNG for simulation.
