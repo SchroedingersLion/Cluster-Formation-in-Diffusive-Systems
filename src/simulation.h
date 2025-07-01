@@ -66,9 +66,6 @@ class simulation {
                 else if (integrator=="ubu") integrator_step = &simulation:: UBU_step;
                 else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'baoab' and 'ubu'." );
 
-                // Check initialization mode.
-                if (init_mode!="uniform" && init_mode!="grid") throw std:: invalid_argument("Invalid mode of initialization. Allowed are 'uniform' or 'grid'.");
-
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
                 std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate<DIMENSION>> (model.N_particles, coordinate<DIMENSION>()));
@@ -104,7 +101,8 @@ class simulation {
         void UBU_step();
         void apply_periodic_boundaries();
 
-        // void set_initial_position();
+        std::vector<std::vector<double>>  read_from_file(const std:: string& filename);
+        void set_initial_position(const std:: string& init_conf);
         void set_initial_position(const int seed);
         void set_initial_velocities();
 
@@ -134,6 +132,75 @@ class simulation {
 //     model.positions = model.init_positions;
 
 // }
+template <size_t DIMENSION>
+inline std::vector<std::vector<double>> simulation<DIMENSION>:: read_from_file(const std:: string& filename){
+    /* Read .csv file filename containing unknown number of rows and columns. 
+       Each row MUST consist of numbers separated by a single space symbol " ". */
+
+    std::ifstream file(init_conf);
+    
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + init_conf);
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::vector<double> row;
+        std::stringstream ss(line);
+        std::string cell;
+
+        while (std::getline(ss, cell, ' ')) {
+            try {
+                row.push_back(std::stod(cell));
+            } 
+            catch (...) {
+                throw std::runtime_error(std::string("Invalid number in CSV: ") + cell);
+            }
+        }
+
+        // Prevent adding of empty lines.
+        if (!row.empty()) {
+            data.push_back(std::move(row));   
+        }
+    }
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: set_initial_position(const std:: string& init_conf){
+    // Set initial positions as read from file init_conf.
+    
+    std:: cout << "Opening file " << init_conf << " to read initial configuration..." << std:: endl;
+    std::vector<std::vector<double>> data =  read_from_file(init_conf);
+    
+    // Check whether data has consistend rows and columns.
+    const size_t N_rows {data.size()};
+    if (N_rows != model.N_particles) throw std::runtime_error( std:: string("Passed number of particles via --N_particles "
+                                                               "does not coincide with number of rows in file ") + init_conf + ".");
+    for (auto row : data){
+        if (row.size() != DIMENSION) throw std::runtime_error(std:: string("Number of columns in (at least one row) of file ") + init_conf
+                                                              " does not coincide with system dimension passed via --dimension.");
+    }
+
+    double pos;
+    for (int i=0; n<model.N_particles; ++n)
+        for (int dim=0; dim<DIMENSION; ++dim){
+
+            pos = data[i][dim];
+            // Check whether read coordinate lies in the simulation box.
+            if (pos > model.L|| pos < -model.L) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf 
+                                                                         " does exceed the box boundaries, whose side has length [-L,L] "
+                                                                         " where 2L was given via flag --boxlength (default 10, so L=5).");
+
+            model.init_positions[i][dim] = data[i][dim];
+        
+        }
+
+    model.positions = model.init_positions;
+
+    std:: cout << "Successfully read configuration." << std:: endl;
+
+}
 
 
 template <size_t DIMENSION>
@@ -350,11 +417,8 @@ inline void simulation<DIMENSION>:: run(){
     // Prepare simulation.
 
     // Set positions.
-    if (init_mode == "uniform") set_initial_position(seed);
-
-    // else if (init_mode == "grid") set_initial_position();
-
-    const std:: vector <coordinate<DIMENSION>> init_positions {model.positions};  // Needed for MSD computation.
+    if (init_conf) set_initial_position(init_conf); 
+    else set_initial_position(seed);
 
     set_initial_velocities();
 
