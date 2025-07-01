@@ -210,7 +210,7 @@ inline void measurement<DIMENSION>:: add_to_results(){
 template <size_t DIMENSION>
 inline void measurement<DIMENSION>:: print_results(const std:: string outputname){
 
-    std:: cout << "Writing results to file..." << std:: endl;
+    std:: cout << "Writing results to file " << outputname << std:: endl;
 
     std:: ofstream file {outputname};
     
