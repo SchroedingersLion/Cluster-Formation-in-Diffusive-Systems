@@ -43,7 +43,7 @@ std::string description = R"(
         ("N_iter",      "Number of simulation steps.",                                  cxxopts:: value <int>()->default_value(_N_iter_default))
         ("stepsize",    "Simulation stepsize.",                                         cxxopts:: value <double>()->default_value(_stepsize_default))
         ("N_meas",      "Take a measurement any 'N_meas' iterations.",                  cxxopts:: value <int>()->default_value(_N_meas_default))
-        ("integrator",  "Integrator to be used. Either 'BAOAB' or 'UBU'.",              cxxopts:: value <std:: string>()->default_value(_integrator_default))
+        ("integrator",  "Integrator to be used. Either 'baoab' or 'ubu'.",              cxxopts:: value <std:: string>()->default_value(_integrator_default))
         ("threads",     "Number of threads used in the force evaluation.",              cxxopts:: value <int>()->default_value(_threads_default))
         ("seed",        "Randomseed.",                                                  cxxopts:: value <int>()->default_value(_seed_default))
         ("output_name", "Name of the printed file holding the results.",                cxxopts:: value <std:: string>()->default_value(_output_name_default))               

@@ -62,9 +62,9 @@ class simulation {
                            << "Taking a measurement any " << N_meas << " steps.\n" << std:: endl;
 
                 // Specify integrator.
-                if (integrator=="BAOAB") integrator_step = &simulation<DIMENSION>:: BAOAB_step;
-                else if (integrator=="UBU") integrator_step = &simulation:: UBU_step;
-                else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'BAOAB' and 'UBU'." );
+                if (integrator=="baoab") integrator_step = &simulation<DIMENSION>:: BAOAB_step;
+                else if (integrator=="ubu") integrator_step = &simulation:: UBU_step;
+                else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'baoab' and 'ubu'." );
 
                 // Check initialization mode.
                 if (init_mode!="uniform" && init_mode!="grid") throw std:: invalid_argument("Invalid mode of initialization. Allowed are 'uniform' or 'grid'.");
