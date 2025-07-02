@@ -1,12 +1,9 @@
-# SimIPS.
 
-## Summary
+# Cluster Formation in Diffusive Systems
 This repository holds the code for the numerics of for the work  
-**Cluster Formation in Diffusive Systems**[1].  
+[1].  
 
 <img src="https://github.com/user-attachments/assets/d17d4966-8824-475a-afe3-50338c724f56" alt="example_snapshots_1D_2D" width="500">
-
-
 
 It holds 
 - src folder holding the C++ codebase **SimIPS** for the particle simulation. 
@@ -24,13 +21,17 @@ a system of $N$ particles in a cubic simulation box of edge length $L$ under per
 The force calculation requires computing all pairwise distances between the particles in the system which is a $\mathcal{O}(N^2)$ operation, 
 the computational bottleneck of the code. To speed this up, we use multithreading via OpenMP in the force routine. At the moment, the code does
 not use advanced algorithmic approaches (such as cell or Verlet-lists) to improve the scaling with $N$, since these approaches would not have
-helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes.
+helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes. 
 
-# Build From Source
+It is possible to extend the codebase by adding observables to collect, pairwise interaction functions, and Langevin dynamics integrators.
+To add or change the observables to collect, modify the "measurements.h" file. To add or change the pairwise interaction functions, modify the 
+"model.h" file. To add or modify new integrators, modify the "simulation.h" file. The files contain comments and instructions to explain more details.
+
+### Build From Source
 To create an executable on your platform, download the files in the SimIPS/src folder and compile the `main.cpp` file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`. This will create a `simips` executable.
 If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). If you get stuck on other platforms, make use of the LLM of your choice to translate these steps from Linux to your platform.
 
-## Quickstart   
+### Quickstart   
 To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `results.csv` output file holding time series data of the mean distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin). The first column gives the corresponding simulation times. 
 The properties of the simulation can be controlled via various flags (e.g., stepsize, number of particles, number of iterations, which integrator to use etc.). Run `./simips --help` to view the possible options.
 
@@ -38,9 +39,7 @@ The two Python scripts to visualize the results need to be run from a Python env
 To plot the time series results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info. 
   
 In order to create an animation of a trajectory, `./simips` needs to be executed with the `--trajectory` flag, which will prompt the program to print out trajectory data to a second file.  
-This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are various options available (view them via the `--help` flag).
+This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are options available (view them via the `--help` flag).
   
 
 
-## Add additional forcefields or observables
-**explain how users can add new force fields or change the observables that are collected**
