@@ -28,8 +28,11 @@ To add or change the observables to collect, modify the "measurements.h" file. T
 "model.h" file. To add or modify new integrators, modify the "simulation.h" file. The files contain comments and instructions to explain more details.
 
 ### Build From Source
-To create an executable on your platform, download the files in the SimIPS/src folder and compile the `main.cpp` file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`. This will create a `simips` executable.
-If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). If you get stuck on other platforms, make use of the LLM of your choice to translate these steps from Linux to your platform.
+To create an executable on your platform, download the files in the SimIPS/src folder and compile the `main.cpp` file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via  
+`g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`.  
+This will create a `simips` executable.  
+If you see an error that the file `cxxopts.hpp` has not been found, download it from  
+https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). If you get stuck on other platforms, make use of the LLM of your choice to translate these steps from Linux to your platform.
 
 ### Quickstart   
 To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `results.csv` output file holding time series data of the mean distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin). The first column gives the corresponding simulation times. 
