@@ -21,9 +21,8 @@ a system of $N$ particles in a cubic simulation box of edge length $L$ under per
 The force calculation requires computing all pairwise distances between the particles in the system which is a $\mathcal{O}(N^2)$ operation -  
 the computational bottleneck of the code. To speed this up, we use multithreading via OpenMP in the force routine. At the moment, the code does
 not use advanced algorithmic approaches (such as cell or Verlet lists) to improve the scaling with $N,$ since these approaches would not have
-helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes. 
-<br>
-<br>
+helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes.
+
 It is possible to extend the codebase by adding observables to collect, pairwise interaction functions, and Langevin dynamics integrators.
 To add or change the observables to collect, modify the "measurements.h" file. To add or change the pairwise interaction functions, modify the 
 "model.h" file. To add or modify new integrators, modify the "simulation.h" file. The files contain comments and instructions to explain more details.
@@ -37,8 +36,8 @@ To run a simulation, run the executable with `./simips`. This will simulate a si
 The properties of the simulation can be controlled via various flags (e.g., stepsize, number of particles, number of iterations, which integrator to use etc.). Run `./simips --help` to view the possible options.
 
 The two Python scripts to visualize the results need to be run from a Python environment (e.g., conda environment) with installed `numpy` and `matplotlib` packages.
-To plot the time series results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info. 
-  
+To plot the time series results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info.
+
 In order to create an animation of a trajectory, `./simips` needs to be executed with the `--trajectory` flag, which will prompt the program to print out trajectory data to a second file.  
 This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are options available (view them via the `--help` flag).
   
