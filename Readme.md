@@ -1,10 +1,10 @@
 # SimIPS.
 
 ## Summary
-This repository holds the code for the numerics of for the work
+This repository holds the code for the numerics of for the work  
 **Cluster Formation in Diffusive Systems**[1].  
 
-.![snapshot_animation_github](https://github.com/SchroedingersLion/Interacting_Particle_Systems/assets/70909827/b1cfc6b6-a946-442a-bb4f-a3bdbe877f05)
+
 
 It holds 
 - src folder holding the C++ codebase **SimIPS** for the particle simulation. 
