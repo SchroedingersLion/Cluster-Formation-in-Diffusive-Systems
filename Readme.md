@@ -23,6 +23,7 @@ the computational bottleneck of the code. To speed this up, we use multithreadin
 not use advanced algorithmic approaches (such as cell or Verlet lists) to improve the scaling with $N,$ since these approaches would not have
 helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes. 
 <br>
+<br>
 It is possible to extend the codebase by adding observables to collect, pairwise interaction functions, and Langevin dynamics integrators.
 To add or change the observables to collect, modify the "measurements.h" file. To add or change the pairwise interaction functions, modify the 
 "model.h" file. To add or modify new integrators, modify the "simulation.h" file. The files contain comments and instructions to explain more details.
