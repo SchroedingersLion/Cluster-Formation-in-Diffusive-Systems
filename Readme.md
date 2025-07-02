@@ -4,6 +4,8 @@
 This repository holds the code for the numerics of for the work  
 **Cluster Formation in Diffusive Systems**[1].  
 
+<img src="https://github.com/user-attachments/assets/d17d4966-8824-475a-afe3-50338c724f56" alt="example_snapshots_1D_2D" width="500">
+
 
 
 It holds 
