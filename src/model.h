@@ -14,7 +14,12 @@
 /*  
 Holds the model class which specifies a cubic simulation box with N particles that interact via a pairwise
 interaction potential. In particular, this class implements the pairwise forces given by various interaction potentials.
-It is straightforward to extend the code by adding new pairwise interactions.
+It is straightforward to extend the code by adding new pairwise interactions. Code regions which the user needs to modify for
+this aim are marked by 
+// !!!!!!!
+
+// !!!!!!!
+environments.
 
 All member functions are implemented inline for simplicity.
 */
@@ -56,12 +61,15 @@ class IPS_model {
                 // Resize vectors.
                 resize_vectors();
 
-                // Specify force field.
+                // !!!!!!!!!!!!!!!!!! SPECIFY FORCEFIELD !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if (forcefield=="gauss") get_force_ij = &IPS_model:: get_force_ij_gauss;
                 else if (forcefield=="morse") get_force_ij = &IPS_model:: get_force_ij_morse;
                 else if (forcefield=="gem4") get_force_ij = &IPS_model:: get_force_ij_gem4;
-                else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss', 'morse', and 'gem4'." );
+                
+                // Add new else if clause if needed.
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+                else throw std:: invalid_argument( "Invalid forcefield in model construction. Allowed are 'gauss', 'morse', and 'gem4'." );
             }
 
     private:
@@ -70,7 +78,8 @@ class IPS_model {
         const std:: string forcefield;  // Specifies interaction potential.
         void resize_vectors();
         
-        // ########## FORCES ###############################################################################################################        
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!! DECLARE FORCES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
 
         void get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);  // Gauss interaction function.
 
@@ -80,14 +89,16 @@ class IPS_model {
         
         double my_pow(double x, int n); // Help function to compute x^n.
 
-        //##################################################################################################################################
+        // Add new entry if needed.
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 };
-// ##################### END OF CLASS DEFINITION ##############################################
+// ##################### END OF CLASS DEFINITION ############################################################################################
 
 
 
-// ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
+// ##################### INLINE MEMBER FUNCTION DEFINITIONS #################################################################################
 template <size_t DIMENSION>
 inline void IPS_model<DIMENSION>:: resize_vectors(){
 
@@ -115,6 +126,8 @@ inline void IPS_model<DIMENSION>:: get_distances_ij(const size_t i, const size_t
 
 }
 
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! INTERACTION FUNCTIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // Gaussian interaction.
 const double sigma_2_gauss {0.5}; // sigma^2.
@@ -197,7 +210,13 @@ inline void IPS_model<DIMENSION>:: get_force_ij_morse(const coordinate<DIMENSION
 
 }
 
-// ########### END OF MEMBER DEFINITIONS ##############################################
+
+// Add new interaction function, if needed.
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+// ########### END OF MEMBER DEFINITIONS ###############################################################################################
 
 
 #endif // MODEL_H

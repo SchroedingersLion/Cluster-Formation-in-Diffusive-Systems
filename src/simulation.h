@@ -23,6 +23,12 @@ of the system stored in the passed model. The class can easily be extended by ad
 pairwise forces between particles are specified in the model class, this class implements a multithreaded overall force routine
 that iterates through all pairs in the system and calls the pairwise force function of the model instance.
 While simulating a system, the simulation class regularly accesses the measurement class to store current observable values.
+The class can be extended by adding new integrators. 
+Code regions which the user needs to modify for this aim are marked by 
+\\ !!!!!!!
+
+\\ !!!!!!!
+environments.
 
 All member functions are implemented inline for simplicity.
 */
@@ -70,10 +76,14 @@ class simulation {
                            << "Randomseed " << seed << ".\n"
                            << "Taking a measurement any " << N_meas << " steps.\n" << std:: endl;
 
-                // Specify integrator.
+                // !!!!!!!!!!!!!!!!!!!!!!!!!! SPECIFY INTEGRATOR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
                 if (integrator=="baoab") integrator_step = &simulation<DIMENSION>:: BAOAB_step;
                 else if (integrator=="ubu") integrator_step = &simulation:: UBU_step;
+                
+                // Add new else if clause if needed.
+
                 else throw std:: invalid_argument( "Invalid integrator argument. Allowed are 'baoab' and 'ubu'." );
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 // Help vector needed for parallel force computation.
                 forces_for_all_tasks.resize(THREADS);
@@ -113,7 +123,7 @@ class simulation {
         
 
 
-        // Integrator functions.
+        //!!!!!!!!!!!!!!!!! INTEGRTOR FUNCTIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         void (simulation<DIMENSION>::* integrator_step)();   // Point to integrator to be used.
         void BAOAB_step();
         void UBU_step();
@@ -124,6 +134,11 @@ class simulation {
         void compute_force_par();           // Multithreaded force routine.
         void apply_periodic_boundaries();
 
+        // Add new integrator functions if needed.
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
         // Functions for system initialization.
         std::vector<std::vector<double>>  read_from_file(const std:: string& filename);
         void set_initial_position(const std:: string& init_conf);
@@ -132,6 +147,7 @@ class simulation {
 
 };
 // ##################### END OF CLASS DEFINITION ##############################################
+
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
@@ -172,127 +188,6 @@ inline void simulation<DIMENSION>:: run(){
     auto t2 = std:: chrono:: high_resolution_clock:: now();
     auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
     std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: UBU_step(){
-
-    const double h_half = stepsize/2;
-
-    U_step(h_half);
-    apply_periodic_boundaries();
-    compute_force_par();
-    B_step(stepsize);
-    U_step(h_half);
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: BAOAB_step(){
-
-    const double h_half = stepsize/2;
-
-    B_step(h_half);
-    A_step(h_half);
-    apply_periodic_boundaries();
-    O_step(stepsize);
-    A_step(h_half);
-    apply_periodic_boundaries();
-    compute_force_par();
-    B_step(h_half);
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: A_step(const double h){
-
-    for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<DIMENSION; ++dim){
-            model.positions[i][dim] += h*model.velocities[i][dim];
-        }
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: B_step(const double h){
-    
-    for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<DIMENSION; ++dim){
-            model.velocities[i][dim] += h*model.forces[i][dim];
-        }
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: O_step(const double h){
-
-    
-    const double a = exp(-gamma*h);
-    const double pref = sqrt(1/beta *(1-a*a));
-    /* 
-    Note: Recreating these constants is somewhat inefficient, but they can't be precomputed 
-    if O_step should be callable for different step-widths h, which is the case here.
-    Passing h as an argument allows for the usage of the same O_step code for integrators 
-    other than BAOAB (e.g., OBABO) to be added in the future. 
-    Need a cleaner way to handle these constants without using flexibility.
-    */
-
-    for (int i=0; i<model.N_particles; ++i)
-        for (size_t dim = 0; dim<DIMENSION; ++dim){
-            model.velocities[i][dim] = a*model.velocities[i][dim] + pref*normal(twister); 
-        }
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: U_step(const double h){
-
-    // Prefactors used in the U step.
-    const double pref_U1 {exp(-gamma*h)};
-    const double pref_U2 {(1-pref_U1)/gamma};
-    const double pref_U3 {sqrt(2/(beta*gamma))};
-    const double pref_U4 {sqrt(2*gamma/beta)};
-    const double pref_Z1 {sqrt(h)};
-    const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
-    const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
-    const double pref_Z4 {sqrt( 1-2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
-    /* 
-    Note: Recreating these constants is inefficient (see note in O_step function above).
-    */
-
-    const double pref_Z2_total1 {pref_Z2 * pref_Z3};
-    const double pref_Z2_total2 {pref_Z2 * pref_Z4};
-
-
-    // Compute new positions/velocities.
-
-    double xi1, xi2, Z1, Z2; 
-
-    for (int i=0; i<model.N_particles; ++i){
-
-        for (size_t dim = 0; dim<DIMENSION; ++dim){
-
-            xi1 = normal(twister);
-            xi2 = normal(twister);
-
-            Z1 = pref_Z1 * xi1;
-
-            Z2 = pref_Z2_total1 * xi1 + pref_Z2_total2 * xi2;
-
-            model.positions[i][dim] += pref_U2 * model.velocities[i][dim] + pref_U3 * (Z1 - Z2);
-
-            model.velocities[i][dim] = pref_U1 * model.velocities[i][dim] + pref_U4 * Z2;
-        
-        }
-
-    }
 
 }
 
@@ -473,7 +368,136 @@ inline void simulation<DIMENSION>:: set_initial_velocities(){
 
 }
 
-// ########### END OF MEMBER DEFINITIONS ##############################################
+
+// !!!!!!!!!!!!!!!!!!!!!!!! INTEGRATOR FUNCTIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: UBU_step(){
+
+    const double h_half = stepsize/2;
+
+    U_step(h_half);
+    apply_periodic_boundaries();
+    compute_force_par();
+    B_step(stepsize);
+    U_step(h_half);
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: BAOAB_step(){
+
+    const double h_half = stepsize/2;
+
+    B_step(h_half);
+    A_step(h_half);
+    apply_periodic_boundaries();
+    O_step(stepsize);
+    A_step(h_half);
+    apply_periodic_boundaries();
+    compute_force_par();
+    B_step(h_half);
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: A_step(const double h){
+
+    for (int i=0; i<model.N_particles; ++i)
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
+            model.positions[i][dim] += h*model.velocities[i][dim];
+        }
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: B_step(const double h){
+    
+    for (int i=0; i<model.N_particles; ++i)
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
+            model.velocities[i][dim] += h*model.forces[i][dim];
+        }
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: O_step(const double h){
+
+    
+    const double a = exp(-gamma*h);
+    const double pref = sqrt(1/beta *(1-a*a));
+    /* 
+    Note: Recreating these constants is somewhat inefficient, but they can't be precomputed 
+    if O_step should be callable for different step-widths h, which is the case here.
+    Passing h as an argument allows for the usage of the same O_step code for integrators 
+    other than BAOAB (e.g., OBABO) to be added in the future. 
+    Need a cleaner way to handle these constants without using flexibility.
+    */
+
+    for (int i=0; i<model.N_particles; ++i)
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
+            model.velocities[i][dim] = a*model.velocities[i][dim] + pref*normal(twister); 
+        }
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: U_step(const double h){
+
+    // Prefactors used in the U step.
+    const double pref_U1 {exp(-gamma*h)};
+    const double pref_U2 {(1-pref_U1)/gamma};
+    const double pref_U3 {sqrt(2/(beta*gamma))};
+    const double pref_U4 {sqrt(2*gamma/beta)};
+    const double pref_Z1 {sqrt(h)};
+    const double pref_Z2 {sqrt( (1-pref_U1*pref_U1)/(2*gamma) )};
+    const double pref_Z3 {sqrt( 2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
+    const double pref_Z4 {sqrt( 1-2*(1-pref_U1)/(gamma*h*(1+pref_U1)) )};
+    /* 
+    Note: Recreating these constants is inefficient (see note in O_step function above).
+    */
+
+    const double pref_Z2_total1 {pref_Z2 * pref_Z3};
+    const double pref_Z2_total2 {pref_Z2 * pref_Z4};
+
+
+    // Compute new positions/velocities.
+
+    double xi1, xi2, Z1, Z2; 
+
+    for (int i=0; i<model.N_particles; ++i){
+
+        for (size_t dim = 0; dim<DIMENSION; ++dim){
+
+            xi1 = normal(twister);
+            xi2 = normal(twister);
+
+            Z1 = pref_Z1 * xi1;
+
+            Z2 = pref_Z2_total1 * xi1 + pref_Z2_total2 * xi2;
+
+            model.positions[i][dim] += pref_U2 * model.velocities[i][dim] + pref_U3 * (Z1 - Z2);
+
+            model.velocities[i][dim] = pref_U1 * model.velocities[i][dim] + pref_U4 * Z2;
+        
+        }
+
+    }
+
+}
+
+
+// Add new integrator functions if needed.
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+// ########### END OF MEMBER DEFINITIONS ############################################################
 
 #endif // SIMULATION_H
 

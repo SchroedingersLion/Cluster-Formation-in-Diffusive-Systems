@@ -19,7 +19,11 @@ and provides the print function used to print observable time series and (if req
 
 New observables can easily be added. For this, make the new observable known to the constructor analogous to the existing ones,
 and implement its expression from the system's configuration in a new member function. 
-Areas where corresponding code needs to be modified or new code needs to be added are marked.
+Code regions which the user needs to modify for this aim are marked by 
+\\ !!!!!!!
+
+\\ !!!!!!! 
+environments.
 
 All member functions are inline for simplicity.
 */
@@ -40,28 +44,25 @@ class measurement {
             : model {model}, N_meas {N_meas}, N_iter {N_iter}, stepsize {stepsize}, trajectory {trajectory}
             {
                 
-                /*######## ENTER THE NUMBER OF OBSERVABLES TO COLLECT ############*/
+                // !!!!!!!!!! ENTER THE NUMBER OF OBSERVABLES TO COLLECT !!!!!!!!!!!!!!!!!!!!!
                 no_observables = 3;   // Modify if needed.
-                /*################################################################*/
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 
                 observables.resize(no_observables);
                 results.resize(no_observables);
                 col_names.resize(no_observables);
 
-                /*################# ENTER NAMES OF OBSERVABLES (WILL BE HEADER OF OUTPUTFILE)####*/
+                // !!!!!!!!!! ENTER NAMES OF OBSERVABLES (WILL BE HEADER OF OUTPUTFILE) !!!!!!!
                 col_names[0] = "COM";
                 col_names[1] = "MSD";
                 col_names[2] = "Tkin";
 
                 // Add new entry of needed.
 
-                /*################################################################################*/
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 
 
-                /* Number of measurements that will be taken during simulation based on N_iter and N_meas.
-                    N_iter = Number of total integrator steps.
-                    N_meas = Number of steps between two measurement events.
-                */
+                // Number of measurements that will be taken during simulation based on N_iter and N_meas.
                 int no_of_measurements {N_iter / N_meas + 1};
                 
 
@@ -79,9 +80,9 @@ class measurement {
 
         void take_measurement(){
 
-            /* ########### COMPUTE CURRENT OBSERVABLE VALUES FROM PARAMETERS ########
-               The number of entries in vector "observables" must correspond to member variable "no_observables" set by the user
-               in the constructor above. */          
+            /* !!!!!!!!!!!!! COMPUTE CURRENT OBSERVABLE VALUES FROM PARAMETERS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+               The number of entries in vector "observables" must correspond to member variable 
+               "no_observables" set by the user in the constructor above. */          
             
             observables[0] = get_center_of_mass_distance();
             observables[1] = get_msd();
@@ -89,7 +90,7 @@ class measurement {
 
             // Add entry if needed.
 
-            /*########################################################################*/
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             add_to_results();  // Add taken observables to results array and add new time value.
 
@@ -127,17 +128,17 @@ class measurement {
 
         void add_to_results();
 
-        /*###### DECLARE FUNCTIONS TO COMPUTE OBSERVABLES BASED ON SYSTEM'S CURRENT CONFIGURATION ########*/
+        // !!!!!!!!!!! DECLARE FUNCTIONS TO COMPUTE OBSERVABLES BASED ON SYSTEM'S CURRENT CONFIGURATION !!!!!!!!!!!!!!!!!!!!
         float get_center_of_mass_distance();
         float get_msd();
         float get_Tkin();
 
         // Add entry if desired.
 
-        /*############################################################################################*/
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 };
-// ##################### END OF CLASS DEFINITION ##############################################
+// ##################### END OF CLASS DEFINITION ###########################################################################
 
 
 
@@ -227,7 +228,7 @@ inline void measurement<DIMENSION>:: print_results(const std:: string outputname
 }
 
 
-/*########### IMPLEMENT OBSERVABLE CALCULATIONS #####################################*/
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!! IMPLEMENT OBSERVABLE CALCULATIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
 template <size_t DIMENSION>
 inline float measurement<DIMENSION>:: get_center_of_mass_distance(){
@@ -239,7 +240,7 @@ inline float measurement<DIMENSION>:: get_center_of_mass_distance(){
 
     // Compute center of mass (see the paper).
     const double two_L {2*model.L};
-    const double pref {2*M_PI/two_L};
+    const double pref {2*M_PI/model.L};
     const double pref2 {1/pref};
     coordinate<DIMENSION> center_of_mass, xi, zeta, theta;
 
@@ -326,7 +327,7 @@ inline float measurement<DIMENSION>::  get_Tkin(){
 
 // Add entries if needed.
 
-/*####################################################################################*/
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 // ########### END OF MEMBER DEFINITIONS ##############################################
