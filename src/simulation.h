@@ -1,8 +1,6 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#define _USE_MATH_DEFINES
-
 #include "model.h"
 #include "measurement.h"
 #include "coordinate.h"
@@ -17,6 +15,18 @@
 #include <string>
 #include <iomanip>
 
+#define _USE_MATH_DEFINES
+
+/*
+Holds the simulation class definition. This class applies an integrator to propagate the positions, velocities and forces
+of the system stored in the passed model. The class can easily be extended by additional integrators. While the details of the
+pairwise forces between particles are specified in the model class, this class implements a multithreaded overall force routine
+that iterates through all pairs in the system and calls the pairwise force function of the model instance.
+While simulating a system, the simulation class regularly accesses the measurement class to store current observable values.
+
+All member functions are implemented inline for simplicity.
+*/
+
 
 // ###################### SIMULATION CLASS DEFINITION ##################################################
 template <size_t DIMENSION>
@@ -24,7 +34,7 @@ class simulation {
 
     public: 
 
-        measurement<DIMENSION> meas;  // Needs to be public because main calls print function.
+        measurement<DIMENSION> meas;  // Needs to be public because main() calls print function of the measurement class.
 
         // CONSTRUCTOR.
         simulation<DIMENSION> (IPS_model<DIMENSION>& model, 
@@ -69,209 +79,130 @@ class simulation {
                 forces_for_all_tasks.resize(THREADS);
                 std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate<DIMENSION>> (model.N_particles, coordinate<DIMENSION>()));
 
+                twister.seed(seed);       // Seed RNG for simulation.
+
             }; 
 
-        void run();
+        void run();   // Run simulation.
 
 
 
     private:
         
-        std:: mt19937 twister;
-        IPS_model<DIMENSION>& model;
-        const double stepsize;
+        std:: mt19937 twister;                    // RNG used in the integrators.
+        std:: normal_distribution<> normal{0,1};  // Distribution used in the integrators.
+        IPS_model<DIMENSION>& model;              // Stores the particle system.
+        
+        // Integrator parameters. 
+        const double stepsize;          
         const double beta;
         const double gamma;
         const int N_iter;
         const int N_meas;
-        const int THREADS;
-        std:: vector <std:: vector <coordinate<DIMENSION>>> forces_for_all_tasks;
-        const std:: string integrator;  
-        const std:: string init_conf;
         const int seed;
-        void (simulation<DIMENSION>::* integrator_step)();
-        void compute_force_par();
+        const std:: string integrator;  // Which integrator to use.
+
+        /* 
+        How to initialize positions. Either "uniform" or name of .csv file storing 
+        two columns (delimiter " ") of particle positions.
+        */
+        const std:: string init_conf;   
+
+        const int THREADS;  // Number of threads used to compute forces.
+        std:: vector <std:: vector <coordinate<DIMENSION>>> forces_for_all_tasks;   // One force vector per thread.
+        
+
+
+        // Integrator functions.
+        void (simulation<DIMENSION>::* integrator_step)();   // Point to integrator to be used.
+        void BAOAB_step();
+        void UBU_step();
         void A_step(const double h);
         void B_step(const double h);
         void O_step(const double h);
         void U_step(const double h);
-        std:: normal_distribution<> normal{0,1};  // Used by O_step & U_step.
-        void BAOAB_step();
-        void UBU_step();
+        void compute_force_par();           // Multithreaded force routine.
         void apply_periodic_boundaries();
 
+        // Functions for system initialization.
         std::vector<std::vector<double>>  read_from_file(const std:: string& filename);
         void set_initial_position(const std:: string& init_conf);
         void set_initial_position(const int seed);
         void set_initial_velocities();
-
 
 };
 // ##################### END OF CLASS DEFINITION ##############################################
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
-// inline void simulation:: set_initial_position(){
-//     // Square lattice initialization.
-
-//     // Obtain number of particles per box dimension (for even spacing).
-//     int Nx = model.N_particles;
-    
-//     const double L_mod = model.L-0.00001; // To ensure no particle is placed on the edge.
-
-//     const double dx = 2*L_mod/Nx; // Spacing between particles.
-
-//     // Place particles.
-//     for(int ix=0; ix<Nx; ++ix){
-
-//         model.init_positions[ix].x = -L_mod + ix*dx;
-
-//     }
-
-//     model.positions = model.init_positions;
-
-// }
 template <size_t DIMENSION>
-inline std::vector<std::vector<double>> simulation<DIMENSION>:: read_from_file(const std:: string& filename){
-    /* Read .csv file filename containing unknown number of rows and columns. 
-       Each row MUST consist of numbers separated by a single space symbol " ". */
+inline void simulation<DIMENSION>:: run(){
+    /*
+    Main function to run the simulation. Initializes the system, seeds the RNG, and executes the
+    integrator iterations (taking observable measurements in between).
+    */
 
-    std::vector<std::vector<double>> data;
-    std::ifstream file(filename);
+    // Set positions.
+    if (!init_conf.empty() && init_conf != "uniform") set_initial_position(init_conf); 
+    else set_initial_position(seed);
+
+    set_initial_velocities(); // Set velocities.
+
+    compute_force_par();      // Set forces.
+
+
+    // Main loop.
+    std:: normal_distribution<> normal{0,1};
+    const double h_half = 0.5 * stepsize;
     
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open file: " + filename);
-    }
+    std:: cout << "\nRunning simulation...\n";
 
-    std::string line;
-    while (std::getline(file, line)) {
-        std::vector<double> row;
-        std::stringstream ss(line);
-        std::string cell;
-
-        while (std::getline(ss, cell, ' ')) {
-            try {
-                row.push_back(std::stod(cell));
-            } 
-            catch (...) {
-                throw std::runtime_error(std::string("Invalid number in CSV: ") + cell);
-            }
-        }
-
-        // Prevent adding of empty lines.
-        if (!row.empty()) {
-            data.push_back(std::move(row));   
-        }
-    }
-
-    return data;
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: set_initial_position(const std:: string& init_conf){
-    // Set initial positions as read from file init_conf.
+    auto t1 = std:: chrono:: high_resolution_clock:: now();  // Measure runtime.
     
-    std:: cout << "Opening file " << init_conf << " to read initial configuration..." << std:: endl;
-    std::vector<std::vector<double>> data =  read_from_file(init_conf);
-    
-    // Check whether data has consistend rows and columns.
-    const size_t N_rows {data.size()};
-    if (N_rows != model.N_particles) throw std::runtime_error( std:: string("Passed number of particles via --N_particles "
-                                                               "does not coincide with number of rows in file ") + init_conf + ".");
-    for (auto row : data){
-        if (row.size() != DIMENSION) throw std::runtime_error(std:: string("Number of columns in (at least one row) of file ") + init_conf +
-                                                              " does not coincide with system dimension passed via --dimension.");
-    }
-
-    double pos;
-    for (int i=0; i<model.N_particles; ++i)
-        for (int dim=0; dim<DIMENSION; ++dim){
-
-            pos = data[i][dim];
-            // Check whether read coordinate lies in the simulation box.
-            if (pos > model.L|| pos < -model.L) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf +
-                                                                         " does exceed the box boundaries, whose side has length [-L,L] "
-                                                                         " where 2L was given via flag --boxlength (default 10, so L=5).");
-
-            model.init_positions[i][dim] = data[i][dim];
+    for (int i=0; i<=N_iter; ++i){
         
-        }
+        if (i % N_meas == 0) meas.take_measurement();
 
-    model.positions = model.init_positions;
+        (this->*integrator_step)();
 
-    std:: cout << "Successfully read configuration." << std:: endl;
+        if (i%1000==0) std:: cout << "Iteration "<<i<< " done!" << std:: endl;
+
+    }
+
+    auto t2 = std:: chrono:: high_resolution_clock:: now();
+    auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
+    std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
 
 }
 
 
 template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: set_initial_position(const int seed){
-    // Uniform initialization.
+inline void simulation<DIMENSION>:: UBU_step(){
 
-    twister.seed(seed);
-    std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
-    for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<DIMENSION; ++dim) model.init_positions[i][dim] = box_uniform(twister);
-    }
+    const double h_half = stepsize/2;
 
-    model.positions = model.init_positions;
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: set_initial_velocities(){
-    // Gaussian initialization.
-
-    twister.seed(seed);
-    std:: normal_distribution<> normal{0, sqrt(1/beta)};
-    
-    for (int i=0; i<model.N_particles; ++i){
-        for (size_t dim=0; dim<DIMENSION; ++dim) model.velocities[i][dim] = normal(twister);
-    }
+    U_step(h_half);
+    apply_periodic_boundaries();
+    compute_force_par();
+    B_step(stepsize);
+    U_step(h_half);
 
 }
 
 
 template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: compute_force_par()
-{
+inline void simulation<DIMENSION>:: BAOAB_step(){
 
-    for (auto& forces_for_specific_task : forces_for_all_tasks)
-        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate<DIMENSION>());
+    const double h_half = stepsize/2;
 
-    #pragma omp parallel num_threads(THREADS)
-    {
-        coordinate <DIMENSION> distance;
-        coordinate <DIMENSION> force_ij;
-
-
-        #pragma omp for schedule(dynamic)
-        for (int i = 0; i < model.N_particles; ++i) {
-            for (int j = i + 1; j < model.N_particles; ++j) {
-                
-                model.get_distances_ij(i, j, distance);
-                (model.*(model.get_force_ij))(distance, force_ij);
-
-                std:: vector <coordinate<DIMENSION>>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
-                
-                for (size_t dim = 0; dim<DIMENSION; ++dim){
-                    forces_for_this_task[i][dim] += force_ij[dim];
-                    forces_for_this_task[j][dim] += -force_ij[dim];
-                }
-
-            }
-        }
-    }
-
-        // Sum all of the task-specific forces into the output parameter.
-    std:: fill(model.forces.begin(), model.forces.end(), coordinate<DIMENSION>());
-    for (auto const& forces_for_specific_task : forces_for_all_tasks)
-        for (int i = 0; i < model.N_particles; ++i)
-            for (size_t dim = 0; dim<DIMENSION; ++dim){
-                model.forces[i][dim] += forces_for_specific_task[i][dim];
-            }
+    B_step(h_half);
+    A_step(h_half);
+    apply_periodic_boundaries();
+    O_step(stepsize);
+    A_step(h_half);
+    apply_periodic_boundaries();
+    compute_force_par();
+    B_step(h_half);
 
 }
 
@@ -367,6 +298,60 @@ inline void simulation<DIMENSION>:: U_step(const double h){
 
 
 template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: compute_force_par(){
+    /*
+    Fills the forces vector of the model instance by calling the pairwise interaction routine
+    specified in model. To do this, this function needs to iterate over all particle pairs, which is
+    an O(N^2) operation. The iterations are distributed across different threads managed via OpenMP.
+    */
+
+    // Initialize force vector on each task (will have shape (N,DIMENSION)).
+    for (auto& forces_for_specific_task : forces_for_all_tasks)
+        std:: fill(forces_for_specific_task.begin(), forces_for_specific_task.end(), coordinate<DIMENSION>());
+
+    // OMP environment.
+    #pragma omp parallel num_threads(THREADS)
+    {
+    
+        coordinate <DIMENSION> distance;    // Store distance (per dimension) between two particles.
+        coordinate <DIMENSION> force_ij;    // Store force (per dimension) between those two particles.
+
+        // Dynamically distribute iterations over particle paris across OMP threads.
+        #pragma omp for schedule(dynamic)
+        for (int i = 0; i < model.N_particles; ++i) {
+            for (int j = i + 1; j < model.N_particles; ++j) {
+                
+                // Fill distance and force_ij.
+                model.get_distances_ij(i, j, distance);             
+                (model.*(model.get_force_ij))(distance, force_ij); 
+
+                // Access thread specific force vector.
+                std:: vector <coordinate<DIMENSION>>& forces_for_this_task = forces_for_all_tasks[omp_get_thread_num()];
+                
+                // Add forces to thread specific force vector.
+                for (size_t dim = 0; dim<DIMENSION; ++dim){
+                    forces_for_this_task[i][dim] += force_ij[dim];
+                    forces_for_this_task[j][dim] += -force_ij[dim];
+                }
+
+            }
+        }
+    }
+
+
+    std:: fill(model.forces.begin(), model.forces.end(), coordinate<DIMENSION>());   // Set forces in model to 0.
+
+    // Sum all of the task-specific forces into the output parameter.
+    for (auto const& forces_for_specific_task : forces_for_all_tasks)
+        for (int i = 0; i < model.N_particles; ++i)
+            for (size_t dim = 0; dim<DIMENSION; ++dim){
+                model.forces[i][dim] += forces_for_specific_task[i][dim];
+            }
+
+}
+
+
+template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: apply_periodic_boundaries(){
     
     double pos;
@@ -378,79 +363,113 @@ inline void simulation<DIMENSION>:: apply_periodic_boundaries(){
             pos = model.positions[i][dim];
             model.positions[i][dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
         }
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: UBU_step(){
-
-    const double h_half = stepsize/2;
-
-    U_step(h_half);
-    apply_periodic_boundaries();
-    compute_force_par();
-    B_step(stepsize);
-    U_step(h_half);
 
 }
 
 
 template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: BAOAB_step(){
+inline std::vector<std::vector<double>> simulation<DIMENSION>:: read_from_file(const std:: string& filename){
+    /* 
+    Read .csv file filename containing unknown number of rows and columns. 
+    Each row MUST consist of numbers separated by a single space symbol " ". 
+    */
 
-    const double h_half = stepsize/2;
-
-    B_step(h_half);
-    A_step(h_half);
-    apply_periodic_boundaries();
-    O_step(stepsize);
-    A_step(h_half);
-    apply_periodic_boundaries();
-    compute_force_par();
-    B_step(h_half);
-
-}
-
-
-template <size_t DIMENSION>
-inline void simulation<DIMENSION>:: run(){
-
-    std:: cout << "\nRunning simulation...\n";
-
-    // Prepare simulation.
-
-    // Set positions.
-    if (!init_conf.empty() && init_conf != "uniform") set_initial_position(init_conf); 
-    else set_initial_position(seed);
-
-    set_initial_velocities();
-
-    // Seed RNG for simulation.
-    twister.seed(seed);
-
-    // Set forces.
-    compute_force_par();
-
-
-    // Main loop.
-    std:: normal_distribution<> normal{0,1};
-    const double h_half = 0.5 * stepsize;
-
-    auto t1 = std:: chrono:: high_resolution_clock:: now();
-    for (int i=0; i<=N_iter; ++i){
-        
-        if (i % N_meas == 0) meas.take_measurement();
-
-        (this->*integrator_step)();
-
-
-        if (i%1000==0) std:: cout << "Iteration "<<i<< " done!" << std:: endl;
-
+    std::vector<std::vector<double>> data;  // Store data read from file.
+    
+    std::ifstream file(filename);   // Open file.
+    
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filename);
     }
 
-    auto t2 = std:: chrono:: high_resolution_clock:: now();
-    auto ms_int = std:: chrono:: duration_cast < std:: chrono:: seconds > (t2 - t1);
-    std:: cout << "Execution took " << ms_int.count() << " seconds!\n";
+    std::string line;
+    while (std::getline(file, line)) {
+        
+        std::vector<double> row;    // Store single row from file.
+        std::string cell;           // Store single element from row.
+
+        std::stringstream ss(line); // Allow decomposition of one row into individual elements obtainable via getline().
+
+        while (std::getline(ss, cell, ' ')) {
+            try {
+                row.push_back(std::stod(cell));
+            } 
+            catch (...) {
+                throw std::runtime_error(std::string("Invalid number in CSV: ") + cell);
+            }
+        }
+
+        // Prevent adding of empty lines.
+        if (!row.empty()) {
+            data.push_back(std::move(row));   
+        }
+    }
+
+    return data;
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: set_initial_position(const std:: string& init_conf){
+    // Set initial positions as read from file init_conf.
+    
+    std:: cout << "Opening file " << init_conf << " to read initial configuration..." << std:: endl;
+    std::vector<std::vector<double>> data =  read_from_file(init_conf);
+    
+    // Check whether data has consistend rows and columns.
+    const size_t N_rows {data.size()};
+    if (N_rows != model.N_particles) throw std::runtime_error( std:: string("Passed number of particles via --N_particles "
+                                                               "does not coincide with number of rows in file ") + init_conf + ".");
+    for (auto row : data){
+        if (row.size() != DIMENSION) throw std::runtime_error(std:: string("Number of columns in (at least one row) of file ") + init_conf +
+                                                              " does not coincide with system dimension passed via --dimension.");
+    }
+
+    double pos;
+    for (int i=0; i<model.N_particles; ++i)
+        for (int dim=0; dim<DIMENSION; ++dim){
+
+            pos = data[i][dim];
+            // Check whether read coordinate lies in the simulation box.
+            if (pos > model.L|| pos < -model.L) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf +
+                                                                         " does exceed the box boundaries, whose side has length [-L,L] "
+                                                                         " where 2L was given via flag --boxlength (default 10, so L=5).");
+
+            model.init_positions[i][dim] = data[i][dim];
+        
+        }
+
+    model.positions = model.init_positions;
+
+    std:: cout << "Successfully read configuration." << std:: endl;
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: set_initial_position(const int seed){
+    // Uniform initialization.
+
+    std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
+
+    for (int i=0; i<model.N_particles; ++i){
+        for (size_t dim=0; dim<DIMENSION; ++dim) model.init_positions[i][dim] = box_uniform(twister);
+    }
+
+    model.positions = model.init_positions;
+
+}
+
+
+template <size_t DIMENSION>
+inline void simulation<DIMENSION>:: set_initial_velocities(){
+    // Gaussian initialization.
+
+    std:: normal_distribution<> normal{0, sqrt(1/beta)};
+    
+    for (int i=0; i<model.N_particles; ++i){
+        for (size_t dim=0; dim<DIMENSION; ++dim) model.velocities[i][dim] = normal(twister);
+    }
 
 }
 

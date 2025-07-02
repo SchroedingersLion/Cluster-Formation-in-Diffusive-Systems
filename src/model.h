@@ -2,14 +2,21 @@
 #define MODEL_H
 
 #include "coordinate.h"
-
-#define _USE_MATH_DEFINES
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <string>
 #include <iomanip>
 
+#define _USE_MATH_DEFINES
+
+/*  
+Holds the model class which specifies a cubic simulation box with N particles that interact via a pairwise
+interaction potential. In particular, this class implements the pairwise forces given by various interaction potentials.
+It is straightforward to extend the code by adding new pairwise interactions.
+
+All member functions are implemented inline for simplicity.
+*/
 
 
 
@@ -19,13 +26,19 @@ class IPS_model {
 
     public: 
 
-        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES
+        // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
         const double L;                // Box volume = [-L,L]^2.
         const int N_particles;         // No. of particles.
+        
         std:: vector <coordinate<DIMENSION>> positions, init_positions, velocities, forces;
-        void (IPS_model::* get_force_ij) (const coordinate<DIMENSION>&, coordinate<DIMENSION>&); // Points to interaction function between two particles.
-        void get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances);                 // Get (dx, dy) tupel of distances between particles i,j.
+        
+        // Point to interaction function between two particles.
+        void (IPS_model::* get_force_ij) (const coordinate<DIMENSION>&, coordinate<DIMENSION>&); 
 
+        // Get (dx, dy) tupel of distances between particles i and j.
+        void get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances);
+
+        // DEFAULT CONSTRUCTOR.
         IPS_model<DIMENSION>(){};
 
         // CONSTRUCTOR.
@@ -57,14 +70,12 @@ class IPS_model {
         void resize_vectors();
         
         // ########## FORCES ###############################################################################################################        
-        // Gaussian potential.
-        void get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // Gauss interaction function.
 
-        // Morse potential.
-        void get_force_ij_morse(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // Morse interaction function.
+        void get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);  // Gauss interaction function.
 
-        // // GEM-4 potential
-        void get_force_ij_gem4(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);            // GEM-4 interaction function.
+        void get_force_ij_morse(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);  // Morse interaction function.
+
+        void get_force_ij_gem4(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij);   // GEM-4 interaction function.
         
         double my_pow(double x, int n); // Help function to compute x^n.
 
@@ -72,6 +83,7 @@ class IPS_model {
 
 };
 // ##################### END OF CLASS DEFINITION ##############################################
+
 
 
 // ##################### INLINE MEMBER FUNCTION DEFINITIONS ###################################
@@ -85,6 +97,7 @@ inline void IPS_model<DIMENSION>:: resize_vectors(){
 
 }
 
+
 template <size_t DIMENSION>
 inline void IPS_model<DIMENSION>:: get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances){
 
@@ -93,7 +106,7 @@ inline void IPS_model<DIMENSION>:: get_distances_ij(const size_t i, const size_t
 
     for (size_t dim = 0; dim<DIMENSION; ++dim){
         dx = positions[i][dim] - positions[j][dim];
-        dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);
+        dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);  // Correct for periodic boundaries.
         distances[dim] = dx;
     }
 
@@ -102,7 +115,7 @@ inline void IPS_model<DIMENSION>:: get_distances_ij(const size_t i, const size_t
 }
 
 
-// Gaussian potential.
+// Gaussian interaction.
 const double sigma_2_gauss {0.5}; // sigma^2.
 template <size_t DIMENSION>
 inline void IPS_model<DIMENSION>:: get_force_ij_gauss(const coordinate<DIMENSION>& distance, coordinate<DIMENSION>& force_ij){
@@ -121,7 +134,7 @@ inline void IPS_model<DIMENSION>:: get_force_ij_gauss(const coordinate<DIMENSION
 }
 
 
-// GEM-Alpha potential (reduces to Gaussian for alpha=2, but is less efficient compute-wise).
+// GEM-Alpha interaction (reduces to Gaussian for alpha=2, but is less efficient compute-wise).
 const double sigma_2_gem4 {0.5};
 const double sqrt_two_sigma_2_gem4 {sqrt(2*sigma_2_gem4)};
 const int alpha_gem4 {4};
@@ -146,6 +159,7 @@ inline void IPS_model<DIMENSION>:: get_force_ij_gem4(const coordinate<DIMENSION>
     return;
 
 }
+
 
 template <size_t DIMENSION>
 inline double IPS_model<DIMENSION>:: my_pow(double x, int n){

@@ -1,13 +1,15 @@
 #include "IPS.h"
 
+
 int main(int argc, char* argv[]){
 
     // Process command line arguments.
-    auto [parse_result, options] = parseCommandLine(argc, argv); // Parse command line.
+    auto [parse_result, options] = parseCommandLine(argc, argv); 
     if (parse_result.count("help")) {std:: cout << options.help() << std:: endl; return 0;}
     ParsedValues vals = processParsedValues(parse_result);
 
-    // Set up simulation.
+
+    // Set up simulation. Switch statement for dimensionality.
     switch(vals.dimension){
         
         case 1: {

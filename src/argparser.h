@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cxxopts.hpp>
 
-// DEFAULT PARAMETERS
+// Define default values for desired command line options.
 const std:: string  _N_particles_default {"1000"};
 const std:: string  _boxlength_default {"10"};
 const std:: string  _forcefield_default {"gauss"};
@@ -21,18 +21,22 @@ const std:: string  _seed_default {"1"};
 const std:: string  _output_name_default {"results.csv"};
 const std:: string  _dimension_default {"1"};
 
+// Processes command line.
 std:: pair <cxxopts:: ParseResult, cxxopts:: Options> parseCommandLine(int argc, char* argv[]) {
-std::string description = R"(
+    
+    // Description printed by the --help flag.
+    std::string description = R"(
     To run a simulation use IPS.exe and use the flags below to control the settings.
     The program will print a .csv file containing time series data of the mean center of mass
     distance, the mean-squared-displacement, and the kinetic temperature.
 
-    If the --traj flag is passed, the whole trajectory (i.e. all positions of all particles in time)
-    is printed to a separate file traj.csv.
+    If the --trajectory flag is passed, the whole trajectory (i.e., all positions of all particles in time)
+    is printed to a separate file.
     )";
+    
+    // Define command line options.
     cxxopts::Options options("IPS.exe", description);
 
-    // Define command line options.
     options.add_options()
         ("N_particles", "Number of particles.",                                         cxxopts:: value <int>()->default_value(_N_particles_default))
         ("boxlength",   "Length of edge of square simulation box.",                     cxxopts:: value <double>()->default_value(_boxlength_default))
@@ -53,9 +57,11 @@ std::string description = R"(
 
     // Parse command line.
     return {options.parse(argc, argv), options};
+
 }
 
 
+// Datatype for storage of read-in and parsed options.
 struct ParsedValues{
     int N_particles;
     double boxlength;
@@ -75,9 +81,9 @@ struct ParsedValues{
 };
 
 
+// Fill ParsedValues with read-in and parsed options.
 ParsedValues processParsedValues(const cxxopts:: ParseResult& result) {
     
-    // Access parsed values.
     ParsedValues values;
 
     values.N_particles = result.count("N_particles") ?   result["N_particles"].as<int>()        : std:: stoi(_N_particles_default);
