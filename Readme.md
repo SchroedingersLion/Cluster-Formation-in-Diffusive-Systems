@@ -18,9 +18,9 @@ The following sections briefly explain the usage of the code. Feel free to reach
 ## SimIPS
 SimIPS (**Sim**ulation of **I**nteracting **P**article **S**ystems) is a lightweight C++ code run from the command line to simulate 
 a system of $N$ particles in a cubic simulation box of edge length $L$ under periodic boundaries. It can treat one, two, or three dimensional systems. The particles interact via pairwise interaction potentials. The current implementation offers the three interaction potentials we used in the paper. The system is then simulated by integrating Langevin dynamics (using one of two high-quality integrators), and observables are measured regularly.  Their time series are printed to a .csv file at the end. Optionally, the whole trajectory can be stored and printed to a file as well.  
-The force calculation requires computing all pairwise distances between the particles in the system which is a $\mathcal{O}(N^2)$ operation, 
+The force calculation requires computing all pairwise distances between the particles in the system which is a $\mathcal{O}(N^2)$ operation -  
 the computational bottleneck of the code. To speed this up, we use multithreading via OpenMP in the force routine. At the moment, the code does
-not use advanced algorithmic approaches (such as cell or Verlet-lists) to improve the scaling with $N$, since these approaches would not have
+not use advanced algorithmic approaches (such as cell or Verlet lists) to improve the scaling with $N$, since these approaches would not have
 helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes. 
 
 It is possible to extend the codebase by adding observables to collect, pairwise interaction functions, and Langevin dynamics integrators.
