@@ -356,12 +356,12 @@ inline void simulation<DIMENSION>:: apply_periodic_boundaries(){
     
     double pos;
     const double L {model.L};
-    const double two_L {2*L};
+    const double L_half {0.5*L};
 
     for (int i=0; i<model.N_particles; ++i)
         for (size_t dim = 0; dim<DIMENSION; ++dim){
             pos = model.positions[i][dim];
-            model.positions[i][dim] = pos>L ? pos-two_L : (pos<-L ? pos + two_L : pos);
+            model.positions[i][dim] = pos>L_half ? pos-L : (pos<-L_half ? pos + L : pos);
         }
 
 }
@@ -431,7 +431,7 @@ inline void simulation<DIMENSION>:: set_initial_position(const std:: string& ini
 
             pos = data[i][dim];
             // Check whether read coordinate lies in the simulation box.
-            if (pos > model.L|| pos < -model.L) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf +
+            if (pos > model.L/2. || pos < -model.L/2.) throw std::runtime_error(std:: string("One of the coordinates from file ") + init_conf +
                                                                          " does exceed the box boundaries, whose side has length [-L,L] "
                                                                          " where 2L was given via flag --boxlength (default 10, so L=5).");
 
@@ -450,7 +450,7 @@ template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: set_initial_position(const int seed){
     // Uniform initialization.
 
-    std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
+    std:: uniform_real_distribution<double> box_uniform(-model.L/2., model.L/2.);
 
     for (int i=0; i<model.N_particles; ++i){
         for (size_t dim=0; dim<DIMENSION; ++dim) model.init_positions[i][dim] = box_uniform(twister);

@@ -1,42 +1,44 @@
 # SimIPS.
 
 ## Summary
-This repository holds a multithreaded C++ code for the **Sim**ulation of **I**nteracting **P**article **S**ystems (SimIPS) for the work
-**Emergence of Clusters in Langevin Dynamics**.  
-It holds the source code that can be easily modified, compiled and run, and two simple Python scripts to visualize the results.
+This repository holds the code for the numerics of for the work
+**Cluster Formation in Diffusive Systems**[1].  
 
-## Introduction
-We study a system of $N$ particles, whose configuration is given by the particle positions $\boldsymbol{x}_i\in \mathbb{R}^d$ and velocities $\boldsymbol{v}_i \in \mathbb{R}^d$, for $i=1,...,N$ and $d\in \\{1,2,3\\}$. The particles evolve in time $t$ via underdamped Langevin Dynamics, given by
-``` math
-\begin{aligned}
-\text{d}\boldsymbol{x}_i &=  \boldsymbol{v}_i \text{d}t, \\
-\text{d}\boldsymbol{v}_i &= -\frac{1}{N} \sum_{i=j}^{N}\nabla W(\boldsymbol{x}_i, \boldsymbol{x}_j)\text{d}t -  \gamma \boldsymbol{v}_i \text{d}t + \sqrt{2\gamma \beta^{-1}}\text{d}\boldsymbol{B}_t^i,
-\end{aligned}
-```
-with friction $\gamma \ge 0$, temperature $\beta^{-1} \ge 0$ and a $d$-dimensional standard Wiener process $\boldsymbol{B}^i_t$.
-Each particle pair interacts via interaction potential $W(\boldsymbol{x}, \boldsymbol{y})$, which is purely attractive in our case. For a list of implemented potentials, see below.  
+.![snapshot_animation_github](https://github.com/SchroedingersLion/Interacting_Particle_Systems/assets/70909827/b1cfc6b6-a946-442a-bb4f-a3bdbe877f05)
 
-The equations have to be solved numerically through suitable integrators, two of which are currently implemented (see the paper for a discussion).
+It holds 
+- src folder holding the C++ codebase **SimIPS** for the particle simulation. 
+- Python script **plot_data.py** to plot the observable data printed from the simulation.
+- Python script **plot_trajectory.py** to create an animation of the system trajectory printed from the simulation.
+- Jupyter notebook NAME to numerically solve the eigenvalue problem of the linear stability analysis (Sec. in the paper).
+- Jupyter notebook NAME for the treatment of the fluctuation analysis (Sec. in the paper).
+- Animations folder storing the example animations referred to in the paper.
 
-For temperatures smaller than some critical temperature, i.e., $\beta$ larger than some critical $\beta_c$, the equilibrium distribution of particles is given by a single particle cluster which holds all particles. Starting the simulation with the initial positions sampled from a uniform distribution, for $\beta > \beta_c$ one observes one or more clusters forming. In the case of multiple clusters, the clusters randomly move around until they are close enough to another cluster such that the attractive forces leads to cluster merging, successively reducing the total number of clusters until the final equilibrium cluster remains.
+The following sections briefly explain the usage of the code. Feel free to reach out with any questions via creating an issue.
 
+## SimIPS
+SimIPS (**Sim**ulation of **I**nteracting **P**article **S**ystems) is a lightweight C++ code run from the command line to simulate 
+a system of $N$ particles in a cubic simulation box of edge length $L$ under periodic boundaries. It can treat one, two, or three dimensional systems. The particles interact via pairwise interaction potentials. The current implementation offers the three interaction potentials we used in the paper. The system is then simulated by integrating Langevin dynamics (using one of two high-quality integrators), and observables are measured regularly.  Their time series are printed to a .csv file at the end. Optionally, the whole trajectory can be stored and printed to a file as well.  
+The force calculation requires computing all pairwise distances between the particles in the system which is a $\mathcal{O}(N^2)$ operation, 
+the computational bottleneck of the code. To speed this up, we use multithreading via OpenMP in the force routine. At the moment, the code does
+not use advanced algorithmic approaches (such as cell or Verlet-lists) to improve the scaling with $N$, since these approaches would not have
+helped much for the particular settings we studied. On a Dell Latitude 5530 using an i7-1265U processor, using 10 OpenMP threads, running a system of 4,000 particles for 20,000 iterations leads to a runtime of 6 to 7 minutes.
 
-## Build From Source
-To create an executable on your platform, download the files in the src folder and compile the `main.cpp` file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`.  
-If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). 
+# Build From Source
+To create an executable on your platform, download the files in the SimIPS/src folder and compile the `main.cpp` file. Due to the use of OpenMP, a corresponding flag will need to be passed, depending on the compiler. It might also be necessary to specify the C++17 standard (or higher). On Linux, using gcc, compilation is invoked via `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`. This will create a `simips` executable.
+If you see an error that the file `cxxopts.hpp` has not been found, download it from https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). If you get stuck on other platforms, make use of the LLM of your choice to translate these steps from Linux to your platform.
 
 ## Quickstart   
-To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `.csv` output file holding time series data of the mean distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin).  
+To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `results.csv` output file holding time series data of the mean distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin). The first column gives the corresponding simulation times. 
 The properties of the simulation can be controlled via various flags (e.g., stepsize, number of particles, number of iterations, which integrator to use etc.). Run `./simips --help` to view the possible options.
 
-The two Python scripts to visualize the results needs to be run from a Python environment (e.g., conda environment) with installed `numpy` and `matplotlib` packages.
+The two Python scripts to visualize the results need to be run from a Python environment (e.g., conda environment) with installed `numpy` and `matplotlib` packages.
 To plot the time series results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info. 
   
 In order to create an animation of a trajectory, `./simips` needs to be executed with the `--trajectory` flag, which will prompt the program to print out trajectory data to a second file.  
 This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are various options available (view them via the `--help` flag).
   
-A snapshot of an animation can be seen below.
-.![snapshot_animation_github](https://github.com/SchroedingersLion/Interacting_Particle_Systems/assets/70909827/b1cfc6b6-a946-442a-bb4f-a3bdbe877f05)
+
 
 ## Add additional forcefields or observables
 **explain how users can add new force fields or change the observables that are collected**

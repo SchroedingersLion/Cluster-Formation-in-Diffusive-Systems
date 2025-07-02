@@ -2,6 +2,7 @@
 #define MODEL_H
 
 #include "coordinate.h"
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -27,7 +28,7 @@ class IPS_model {
     public: 
 
         // MEMBERS THAT WILL BE ACCESSED BY MEASUREMENT OR SIMULATION CLASSES.
-        const double L;                // Box volume = [-L,L]^2.
+        const double L;                // Box volume = [-L/2,L/2]^2.
         const int N_particles;         // No. of particles.
         
         std:: vector <coordinate<DIMENSION>> positions, init_positions, velocities, forces;
@@ -44,7 +45,7 @@ class IPS_model {
         // CONSTRUCTOR.
         IPS_model<DIMENSION>(const int N_particles, const double boxlength, const std:: string& forcefield)
                 : N_particles {N_particles}, 
-                  L {boxlength/2}, 
+                  L {boxlength}, 
                   kappa {1./N_particles}, 
                   forcefield {forcefield}
             {
@@ -101,12 +102,12 @@ inline void IPS_model<DIMENSION>:: resize_vectors(){
 template <size_t DIMENSION>
 inline void IPS_model<DIMENSION>:: get_distances_ij(const size_t i, const size_t j, coordinate<DIMENSION>& distances){
 
-    const double two_L {2*L};
+    const double L_half {0.5*L};
     double dx;
 
     for (size_t dim = 0; dim<DIMENSION; ++dim){
         dx = positions[i][dim] - positions[j][dim];
-        dx = dx > L ? dx - two_L : (dx < -L ? dx + two_L : dx);  // Correct for periodic boundaries.
+        dx = dx > L_half ? dx - L : (dx < -L_half ? dx + L : dx);  // Correct for periodic boundaries.
         distances[dim] = dx;
     }
 
