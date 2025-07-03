@@ -239,7 +239,7 @@ inline float measurement<DIMENSION>:: get_center_of_mass_distance(){
 */
 
     // Compute center of mass (see the paper).
-    const double two_L {2*model.L};
+    const double L_half {0.5*model.L};
     const double pref {2*M_PI/model.L};
     const double pref2 {1/pref};
     coordinate<DIMENSION> center_of_mass, xi, zeta, theta;
@@ -270,8 +270,8 @@ inline float measurement<DIMENSION>:: get_center_of_mass_distance(){
         for (size_t dim=0; dim<DIMENSION; ++dim){
             dist_dim[dim] = model.positions[n][dim] - center_of_mass[dim];
 
-            if (dist_dim[dim] > model.L)       dist_dim[dim] -= two_L;  // Periodic boundaries.
-            else if (dist_dim[dim] < -model.L) dist_dim[dim] += two_L;
+            if (dist_dim[dim] > L_half)       dist_dim[dim] -= model.L;  // Periodic boundaries.
+            else if (dist_dim[dim] < -L_half) dist_dim[dim] += model.L;
             
             sum += dist_dim[dim]*dist_dim[dim];
         }
@@ -288,7 +288,7 @@ inline float measurement<DIMENSION>:: get_msd(){
     // Compute Mean Squared Displacement.
 
     coordinate<DIMENSION> diff;
-    double msd {0}, two_L {2*model.L};
+    double msd {0}, L_half {0.5*model.L};
 
     for(int i=0; i<model.N_particles; ++i){
         
@@ -296,8 +296,8 @@ inline float measurement<DIMENSION>:: get_msd(){
 
             diff[dim] = model.positions[i][dim] - model.init_positions[i][dim];
 
-            if (diff[dim] > model.L)         diff[dim] -= two_L;   // Periodic boundaries.
-            else if (diff[dim] < -model.L)   diff[dim] += two_L;
+            if (diff[dim] > L_half)         diff[dim] -= model.L;   // Periodic boundaries.
+            else if (diff[dim] < -L_half)   diff[dim] += model.L;
 
             msd += diff[dim]*diff[dim];
         }
