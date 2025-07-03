@@ -73,6 +73,8 @@ class simulation {
                 forces_for_all_tasks.resize(THREADS);
                 std:: fill(forces_for_all_tasks.begin(), forces_for_all_tasks.end(), std:: vector <coordinate<DIMENSION>> (model.N_particles, coordinate<DIMENSION>()));
 
+                twister.seed(seed);  // Seed RNG.
+
             }; 
 
         void run();
@@ -138,7 +140,6 @@ template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: set_initial_position(const int seed){
     // Uniform initialization.
 
-    twister.seed(seed);
     std:: uniform_real_distribution<double> box_uniform(-model.L, model.L);
     for (int i=0; i<model.N_particles; ++i){
         for (size_t dim=0; dim<DIMENSION; ++dim) model.init_positions[i][dim] = box_uniform(twister);
@@ -153,7 +154,6 @@ template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: set_initial_velocities(){
     // Gaussian initialization.
 
-    twister.seed(seed);
     std:: normal_distribution<> normal{0, sqrt(1/beta)};
     
     for (int i=0; i<model.N_particles; ++i){
@@ -346,8 +346,6 @@ inline void simulation<DIMENSION>:: run(){
     // std:: fill(model.velocities.begin(), model.velocities.end(), coordinate{0,0});  // Reset velocities.
     set_initial_velocities();
 
-    // Seed RNG for simulation.
-    twister.seed(seed);
 
     // Set forces.
     compute_force_par();
