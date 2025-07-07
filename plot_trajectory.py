@@ -20,10 +20,8 @@ plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
 plt.rc('ytick', labelsize=22) 
 plt.rcParams['lines.markersize'] = 10
-plt.rcParams['lines.markersize'] = 10
 
 ### Function to update animation.
-def update_2D(frame, x_coords, y_coords, times, scatterplot, time_text):
 def update_2D(frame, x_coords, y_coords, times, scatterplot, time_text):
     
     # for each frame, update the data stored on each artist.
@@ -64,27 +62,6 @@ def update_3D(frame, x_coords, y_coords, z_coords, times, scatterplot, time_text
     return (scatterplot)
 
 
-def update_3D(frame, x_coords, y_coords, z_coords, times, scatterplot, time_text):
-    
-    # for each frame, update the data stored on each artist.
-    x = x_coords[frame]
-    y = y_coords[frame]
-    z = z_coords[frame]
-
-    scatterplot._offsets3d=(x,y,z)
-
-
-    # for i in range(0,len(x)):
-    #     xdata = x[i]
-    #     ydata = y[i]
-    #     zdata = z[i]
-    #     data = np.stack([xdata, ydata, zdata]).T
-    #     scatterplot._offsets3d(data)
-    #     scatterplot.set_offsets(data)
-
-    time_text.set_text(f'Time: {times[frame]}')
-
-    return (scatterplot)
 
 
 # Parse the command-line arguments.
