@@ -182,7 +182,7 @@ elif dimension == 2:
     # Save animation.
     if save_file:
         print("Saving animation...")
-        ani.save(save_file, writer='ffmpeg', fps=fps)
+        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=200)
 
     plt.show()
 
@@ -236,7 +236,7 @@ elif dimension == 3:
     # Save animation.
     if save_file:
         print("Saving animation...")
-        ani.save(save_file, writer='ffmpeg', fps=fps)
+        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=200)
     
     plt.show()
 
