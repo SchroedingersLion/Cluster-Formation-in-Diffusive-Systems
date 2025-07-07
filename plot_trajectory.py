@@ -18,6 +18,7 @@ plt.rcParams['axes.titlepad'] = 26
 plt.rcParams['axes.labelsize'] = 30
 plt.rc('xtick', labelsize=22)
 plt.rc('ytick', labelsize=22) 
+plt.rcParams['lines.markersize'] = 10
 
 
 ### Function to update animation.
@@ -154,7 +155,7 @@ elif dimension == 2:
 
     # Create animation window.
     fig, ax = plt.subplots(figsize=(10, 10))
-    ax.set(xlim=xlim, ylim=ylim, xlabel='x', ylabel='y')
+    ax.set(xlim=xlim, ylim=ylim, xlabel=r'$x$', ylabel=r'$y$')
     ax.set_title(title)
 
     # Compute number of particles (given by the first row where the time is no longer 0).
@@ -174,7 +175,7 @@ elif dimension == 2:
         times[i] = arr[i*N_part, 0]
 
     # Create scatter plot for animation function.
-    scat = ax.scatter(x_coords[0], y_coords[0], c="b", s=5,)
+    scat = ax.scatter(x_coords[0], y_coords[0], c="tab:blue", alpha=0.6)
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
     # Plot animation.
@@ -182,7 +183,7 @@ elif dimension == 2:
     # Save animation.
     if save_file:
         print("Saving animation...")
-        ani.save(save_file, writer='ffmpeg', fps=fps)
+        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=200)
 
     plt.show()
 
@@ -199,9 +200,9 @@ elif dimension == 3:
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
     ax.set(xlim=xlim, ylim=ylim, zlim=zlim)
-    ax.set_xlabel('x', labelpad=15)
-    ax.set_ylabel('y', labelpad=15)
-    ax.set_zlabel('z', labelpad=15)
+    ax.set_xlabel(r'$x$', labelpad=15)
+    ax.set_ylabel(r'$y$', labelpad=15)
+    ax.set_zlabel(r'$z$', labelpad=15)
     ax.set_title(title)
     
     # Configure 3D plot
@@ -228,7 +229,7 @@ elif dimension == 3:
         times[i] = arr[i*N_part, 0]
     
     # Create scatter plot for animation function.
-    scat = ax.scatter(x_coords[0], y_coords[0], z_coords[0], c="b", s=5,)
+    scat = ax.scatter(x_coords[0], y_coords[0], z_coords[0], c="tab:blue", alpha=0.6)
     time_text = ax.text2D(0.05, 0.9, "", transform=ax.transAxes)
     
     # Plot animation.
@@ -236,7 +237,7 @@ elif dimension == 3:
     # Save animation.
     if save_file:
         print("Saving animation...")
-        ani.save(save_file, writer='ffmpeg', fps=fps)
+        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=200)
     
     plt.show()
 
