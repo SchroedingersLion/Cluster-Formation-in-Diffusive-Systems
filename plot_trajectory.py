@@ -20,6 +20,7 @@ plt.rc('xtick', labelsize=22)
 plt.rc('ytick', labelsize=22) 
 plt.rcParams['lines.markersize'] = 10
 
+dpi_cnt = 300
 
 ### Function to update animation.
 def update_2D(frame, x_coords, y_coords, times, scatterplot, time_text):
@@ -183,7 +184,7 @@ elif dimension == 2:
     # Save animation.
     if save_file:
         print("Saving animation...")
-        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=200)
+        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=dpi_cnt)
 
     plt.show()
 
@@ -237,7 +238,7 @@ elif dimension == 3:
     # Save animation.
     if save_file:
         print("Saving animation...")
-        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=200)
+        ani.save(save_file, writer='ffmpeg', fps=fps, dpi=dpi_cnt)
     
     plt.show()
 
