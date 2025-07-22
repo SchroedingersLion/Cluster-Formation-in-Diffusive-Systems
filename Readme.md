@@ -9,8 +9,7 @@ It holds
 - src folder holding the C++ codebase **SimIPS** for the particle simulation. 
 - Python script **plot_data.py** to plot the observable data printed from the simulation.
 - Python script **plot_trajectory.py** to create an animation of the system trajectory printed from the simulation.
-- Jupyter notebook NAME to numerically solve the eigenvalue problem of the linear stability analysis (Sec. in the paper).
-- Jupyter notebook NAME for the treatment of the fluctuation analysis (Sec. in the paper).
+- Jupyter notebook **stability_and_fluctuation_analysis.ipynb** for the numerical treatment of the linear stability and fluctuation analysis of Secs. REF, respectively.
 - Animations folder storing the example animations referred to in the paper.
 
 The following sections briefly explain the usage of the code. Feel free to reach out with any questions via creating an issue.
@@ -44,5 +43,6 @@ To plot the time series results, run `python plot_data.py <file>`. It accepts a 
 In order to create an animation of a trajectory, `./simips` needs to be executed with the `--trajectory` flag, which will prompt the program to print out trajectory data to a second file.  
 This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are options available (view them via the `--help` flag).
   
+
 
 
