@@ -1,7 +1,7 @@
 
 # Cluster Formation in Diffusive Systems
-This repository holds the code for the numerics of for the work  
-[1].  
+This repository holds the code for the numerics for the work  
+Leimkuhler, B., Lohmann, R., Pavliotis, G., Whalley, P.A., **Cluster Formation in Diffusive Systems**. 2025. (LINK)
 
 <img src="https://github.com/user-attachments/assets/d17d4966-8824-475a-afe3-50338c724f56" alt="example_snapshots_1D_2D" width="500">
 
@@ -31,7 +31,7 @@ To create an executable on your platform, download the files in the SimIPS/src f
 `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`.  
 This will create a `simips` executable.  
 If you see an error that the file `cxxopts.hpp` has not been found, download it from  
-https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). If you get stuck on other platforms, make use of the LLM of your choice to translate these steps from Linux to your platform.
+https://github.com/jarro2783/cxxopts/tree/master/include and store it in your system's include folder (on Linux, this is typically /usr/include). 
 
 ### Quickstart   
 To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `results.csv` output file holding time series data of the mean distance to the center of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin). The first column gives the corresponding simulation times. 
