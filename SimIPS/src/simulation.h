@@ -345,7 +345,7 @@ template <size_t DIMENSION>
 inline void simulation<DIMENSION>:: set_initial_position(const int seed){
     // Uniform initialization.
 
-    std:: uniform_real_distribution<double> box_uniform(-model.L/2., model.L/2.);
+    std:: uniform_real_distribution<double> box_uniform(-model.L/2., model.L/2.);  // Note: We use [0, L] in the paper.
 
     for (int i=0; i<model.N_particles; ++i){
         for (size_t dim=0; dim<DIMENSION; ++dim) model.init_positions[i][dim] = box_uniform(twister);
@@ -435,7 +435,7 @@ inline void simulation<DIMENSION>:: O_step(const double h){
     if O_step should be callable for different step-widths h, which is the case here.
     Passing h as an argument allows for the usage of the same O_step code for integrators 
     other than BAOAB (e.g., OBABO) to be added in the future. 
-    Need a cleaner way to handle these constants without using flexibility.
+    Need a cleaner way to handle these constants without losing flexibility.
     */
 
     for (int i=0; i<model.N_particles; ++i)
