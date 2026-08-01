@@ -321,9 +321,11 @@ inline float measurement<DIMENSION>::  get_Tkin(){
         }
     }
 
-    return Tkin/(2*model.N_particles);
+    return Tkin/(DIMENSION * model.N_particles);
 
 }
+
+
 
 // Add entries if needed.
 
