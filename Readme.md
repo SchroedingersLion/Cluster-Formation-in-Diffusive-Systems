@@ -2,12 +2,14 @@
 # Cluster Formation in Diffusive Systems
 [![DOI](https://zenodo.org/badge/750927167.svg)](https://zenodo.org/badge/latestdoi/750927167)
 
-This repository holds code to simulate diffusive N-particle systems. In particular, it holds the code for the numerical experiments in the work 
-Leimkuhler, B., Lohmann, R., Pavliotis, G., Whalley, P.A., **Cluster formation for weakly interacting kinetic Langevin dynamics**. 2025. [https://arxiv.org/abs/2510.25034](https://arxiv.org/abs/2510.25034)
+This repository contains `SimIPS`, a lightweight C++ engine for simulating diffusive N-particle systems. It serves as the official reference implementation and houses the reproducible numerical experiments for the following publication:
+
+> **[Cluster formation for weakly interacting kinetic Langevin dynamics](https://arxiv.org/abs/2510.25034)**  
+> B. Leimkuhler, R. Lohmann, G. A. Pavliotis, P. A. Whalley (2025)
 
 <img src="https://github.com/user-attachments/assets/d17d4966-8824-475a-afe3-50338c724f56" alt="example_snapshots_1D_2D" width="500">
 
-It holds 
+The repository contains the following structure:
 - src folder holding the C++ codebase **SimIPS** for the particle simulation. 
 - Python script **plot_data.py** to plot the observable data printed from the simulation.
 - Python script **plot_trajectory.py** to create an animation of the system trajectory printed from the simulation.
@@ -43,7 +45,7 @@ The two Python scripts to visualise the results need to be run from a Python env
 To plot the time series results, run `python plot_data.py <file>`. It accepts a flag `--title plot_title` to specify a title for the plot. Run `python plot_data.py --help` for more info.
 
 In order to create an animation of a trajectory, `./simips` needs to be executed with the `--trajectory` flag, which will prompt the program to print out trajectory data to a second file.  
-This file can be read with the second Python script via `python plot_trajectory <file>`. Once again, there are options available (view them via the `--help` flag).
+This file can be read with the second Python script via `python plot_trajectory.py <file>`. Once again, there are options available (view them via the `--help` flag).
   
 
 
