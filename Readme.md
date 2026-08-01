@@ -1,5 +1,7 @@
 
 # Cluster Formation in Diffusive Systems
+[![DOI](https://zenodo.org/badge/750927167.svg)](https://zenodo.org/badge/latestdoi/750927167)
+
 This repository holds code to simulate diffusive N-particle systems. In particular, it holds the code for the numerical experiments in the work 
 Leimkuhler, B., Lohmann, R., Pavliotis, G., Whalley, P.A., **Cluster formation for weakly interacting kinetic Langevin dynamics**. 2025. [https://arxiv.org/abs/2510.25034](https://arxiv.org/abs/2510.25034)
 
