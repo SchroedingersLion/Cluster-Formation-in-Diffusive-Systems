@@ -1,26 +1,31 @@
 {
-  "title": "Cluster formation for weakly interacting kinetic Langevin dynamics (SimIPS)",
+  "title": "SimIPS: A C++ Simulation Engine for Interacting Particle Systems",
   "upload_type": "software",
   "creators": [
-    {
-      "name": "Leimkuhler, Benedict",
-      "affiliation": "University of Edinburgh",
-      "orcid": "0000-0001-8504-7091"
-    },
     {
       "name": "Lohmann, René",
       "affiliation": "University of Edinburgh",
       "orcid": "0000-0001-5478-841X"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Whalley, Peter A.",
+      "affiliation": "ETH Zürich",
+      "orcid": "0000-0002-8360-0807",
+      "type": "Researcher"
+    },
+    {
+      "name": "Leimkuhler, Benedict",
+      "affiliation": "University of Edinburgh",
+      "orcid": "0000-0001-8504-7091",
+      "type": "Supervisor"
     },
     {
       "name": "Pavliotis, Grigorios A.",
       "affiliation": "Imperial College London",
-      "orcid": "0000-0002-3468-9227"
-    },
-    {
-      "name": "Whalley, Peter A.",
-      "affiliation": "ETH Zürich",
-      "orcid": "0000-0002-8360-0807"
+      "orcid": "0000-0002-3468-9227",
+      "type": "Supervisor"
     }
   ]
 }
