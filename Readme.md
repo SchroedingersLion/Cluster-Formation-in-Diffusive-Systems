@@ -9,7 +9,7 @@ This repository contains `SimIPS`, a lightweight C++ engine for simulating pairw
 
 <sub><b>Built with SimIPS:</b> Visualized cluster formation in a weakly interacting kinetic Langevin system.<br>
 For the mathematical analysis of this type of cluster formation, see:<br>
-<i>Leimkuhler, B., Lohmann, R., Pavliotis, G. A., & Whalley, P. A. (2026). Cluster formation for weakly interacting kinetic Langevin dynamics.</i> <a href="https://arxiv.org/abs/2510.25034">Arxiv</a><br>
+Leimkuhler, B., Lohmann, R., Pavliotis, G. A., & Whalley, P. A. (in press). Cluster formation for weakly interacting kinetic Langevin dynamics. <i>Proceedings of the Royal Society A</i>. <a href="https://arxiv.org/abs/2510.25034">Arxiv</a><br>
 📂 See also the <code>papers/Leimkuhler_et_al_2026/</code> directory.</sub>
 
 ## Installation
@@ -28,7 +28,7 @@ a system of $N$ particles in a cubic simulation box of edge length $L$ under per
 $$
 \begin{aligned}
 U(r_{i,j}) &= -\exp\Big(-\frac{r_{i,j}^2}{2\sigma^2}\Big), && \quad \text{Gauss potential, $\sigma^2=0.5$.} \\
-U(r_{i,j}) &= \Big(\exp(-2ar_{i,j}) -2\exp(-ar_{i,j})\Big), && \quad \text{Morse potential, $a=2$.}\\
+U(r_{i,j}) &= \exp(-2ar_{i,j}) -2\exp(-ar_{i,j}), && \quad \text{Morse potential, $a=2$.}\\
 U(r_{i,j}) &= -\exp\Big(-\Big(\frac{r_{i,j}}{\sqrt{2\sigma^2}}\Big)^{\alpha}\Big), && \quad \text{GEM-$\alpha$ potential, $\sigma^2=0.5$, $\alpha=4$.}
 \end{aligned}
 $$
@@ -47,7 +47,7 @@ To create an executable on your platform, download the files in the <code>src</c
 `g++ -fopenmp -O3 -std=c++17 -o simips main.cpp`.  
 This will create a `simips` executable.  
 If you see an error that the file `cxxopts.hpp` has not been found, download it from  
-[https://github.com/jarro2783/cxxopts/tree/master/include](https://github.com/jarro2783/cxxopts/tree/master/include) and store it in your system's include folder (on Linux, this is typically /usr/include). 
+[https://github.com/jarro2783/cxxopts/tree/master/include](https://github.com/jarro2783/cxxopts/tree/master/include) and store it in your system's include folder (on Linux, this is typically `/usr/include`). 
 
 ### Quickstart   
 To run a simulation, run the executable with `./simips`. This will simulate a single trajectory of an IPS with default parameters. It will create a `results.csv` output file holding time series data of the mean distance to the centre of mass (COM), the mean squared displacement (MSD), and the (instantaneous) kinetic temperature (Tkin) (see [3] for their definition). The first column gives the corresponding simulation times. 
@@ -62,5 +62,5 @@ This file can be read with the second Python script via `python plot_trajectory.
 ### References
 [1] Leimkuhler, B., & Matthews, C. (2013). Rational construction of stochastic numerical methods for molecular sampling. *Applied Mathematics Research Express*, 2013(1), 34-56. [DOI: 10.1093/amrx/abs010](https://doi.org/10.1093/amrx/abs010) <br>
 [2] Zapatero, A. Á. (2021). *Word Series for the Numerical Integration of Stochastic Differential Equations* (PhD thesis). Universidad de Valladolid. <br>
-[3] Leimkuhler, B., Lohmann, R., Pavliotis, G. A., & Whalley, P. A. (2026). Cluster formation for weakly interacting kinetic Langevin dynamics. *arXiv*. [arXiv:2510.25034](https://arxiv.org/abs/2510.25034)
+[3] Leimkuhler, B., Lohmann, R., Pavliotis, G. A., & Whalley, P. A. (in press). Cluster formation for weakly interacting kinetic Langevin dynamics. *Proceedings of the Royal Society A*. [arXiv:2510.25034](https://arxiv.org/abs/2510.25034)
 
