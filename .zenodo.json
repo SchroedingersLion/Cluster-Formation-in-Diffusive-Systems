@@ -1,5 +1,6 @@
 {
   "title": "SimIPS: A C++ Simulation Engine for Interacting Particle Systems",
+  "description": "C++ simulation engine for interacting particle systems.",
   "upload_type": "software",
   "creators": [
     {
@@ -14,6 +15,6 @@
       "affiliation": "ETH Zürich",
       "orcid": "0000-0002-8360-0807",
       "type": "Researcher"
-    },
+    }
   ]
 }
